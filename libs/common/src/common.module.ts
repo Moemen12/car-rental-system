@@ -1,11 +1,16 @@
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import {
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+  RequestMethod,
+} from '@nestjs/common';
 import { CommonService } from './common.service';
 import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule } from '@app/database';
 
 import { JwtModule } from '@nestjs/jwt';
 import { PayloadEncryptionMiddleware } from './middlewares/payload-encryption.middleware';
-import { publicRoutes } from './utilities/constants';
+import { AuthController } from 'apps/api-gateway/src/modules/auth/auth.controller';
 
 @Module({
   imports: [
@@ -18,6 +23,6 @@ import { publicRoutes } from './utilities/constants';
 })
 export class CommonModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(PayloadEncryptionMiddleware).exclude(...publicRoutes);
+    consumer.apply(PayloadEncryptionMiddleware).forRoutes(AuthController);
   }
 }
