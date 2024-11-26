@@ -2,12 +2,12 @@ import { Injectable, NestMiddleware } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 
 import { JwtService } from '@nestjs/jwt';
-import { CommonService } from '../common.service';
+import { EncryptionService } from '../modules/encryption/encryption.service';
 
 @Injectable()
 export class PayloadEncryptionMiddleware implements NestMiddleware {
   constructor(
-    private readonly commonService: CommonService,
+    private readonly encryptionService: EncryptionService,
     private readonly jwtService: JwtService,
   ) {}
 
@@ -29,7 +29,7 @@ export class PayloadEncryptionMiddleware implements NestMiddleware {
           };
 
           // Encrypt everything as a single package
-          const encryptedData = this.commonService.encrypt(fullPayload);
+          const encryptedData = this.encryptionService.encrypt(fullPayload);
           const newToken = this.jwtService.sign(
             { encrypted: encryptedData },
             {
@@ -50,7 +50,9 @@ export class PayloadEncryptionMiddleware implements NestMiddleware {
       try {
         const payload = this.jwtService.decode(token);
         if (payload && typeof payload === 'object' && payload.encrypted) {
-          const decryptedData = this.commonService.decrypt(payload.encrypted);
+          const decryptedData = this.encryptionService.decrypt(
+            payload.encrypted,
+          );
 
           // Verify expiration
           const now = Math.floor(Date.now() / 1000);

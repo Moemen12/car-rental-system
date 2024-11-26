@@ -1,0 +1,280 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Welcome to CarRental - Your Premium Car Rental Platform</title>
+    <style>
+      /* Reset styles */
+      body,
+      table,
+      td,
+      div,
+      p,
+      a {
+        margin: 0;
+        padding: 0;
+        -webkit-text-size-adjust: 100%;
+        -ms-text-size-adjust: 100%;
+        font-family: 'Segoe UI', Arial, sans-serif;
+        box-sizing: border-box;
+      }
+
+      /* Container styles */
+      .email-container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 10px;
+        background-color: #ffffff;
+        width: 100%;
+      }
+
+      /* Header styles */
+      .header {
+        text-align: center;
+        padding: 30px 0;
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        color: #ffffff;
+        border-radius: 8px 8px 0 0;
+      }
+
+      .logo {
+        width: 150px;
+        height: auto;
+        margin-bottom: 20px;
+      }
+
+      /* Content styles */
+      .content {
+        padding: 30px 10px;
+        line-height: 1.6;
+        color: #333333;
+      }
+
+      /* Feature box styles */
+      .feature-box {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 20px 0;
+        border-left: 4px solid #1e3c72;
+      }
+
+      .feature-grid {
+        display: inline-block;
+        width: 100%;
+        margin: 20px 0;
+      }
+
+      .feature-item {
+        padding: 15px;
+        margin: 10px 0;
+        background-color: #ffffff;
+        border-radius: 6px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      /* Button styles */
+      .button {
+        display: inline-block;
+        padding: 14px 35px;
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        color: #ffffff !important;
+        text-decoration: none;
+        border-radius: 25px;
+        margin: 20px 0;
+        font-weight: bold;
+        transition: all 0.3s ease;
+      }
+
+      /* Footer styles */
+      .footer {
+        text-align: center;
+        padding: 20px;
+        background-color: #f8f9fa;
+        color: #666666;
+        font-size: 12px;
+        border-radius: 0 0 8px 8px;
+      }
+
+      /* Responsive styles */
+      @media screen and (max-width: 600px) {
+        /* Ensure container width is 100% on small screens */
+        .email-container {
+          width: 100% !important;
+        }
+
+        /* Adjust padding and margins for smaller screens */
+        .content {
+          padding: 20px 15px !important;
+        }
+
+        /* Ensure buttons don't overflow */
+        .button {
+          width: 100% !important;
+          padding: 12px 20px;
+          font-size: 16px;
+        }
+
+        /* Adjust feature box padding */
+        .feature-box {
+          padding: 15px !important;
+        }
+
+        /* Ensure logo fits within smaller screens */
+        .logo {
+          width: 120px;
+          margin-bottom: 15px;
+        }
+
+        /* Remove any overflow */
+        body {
+          overflow-x: hidden;
+        }
+      }
+    </style>
+  </head>
+  <body style="margin: 0; padding: 0; background-color: #f4f4f4">
+    <table
+      role="presentation"
+      cellspacing="0"
+      cellpadding="0"
+      border="0"
+      align="center"
+      width="100%"
+      style="max-width: 600px; margin: auto"
+    >
+      <tr>
+        <td>
+          <div class="email-container">
+            <!-- Header -->
+            <div class="header">
+              <img
+                src="http://localhost:3000/public/assets/images/logo.png"
+                alt="CarRental Logo"
+                class="logo"
+              />
+              <h1 style="color: #ffffff; margin: 0; font-size: medium">
+                Welcome, {{fullName}}!
+              </h1>
+            </div>
+
+            <!-- Content -->
+            <div class="content">
+              <p>Dear {{fullName}},</p>
+
+              <p>
+                Welcome to CarRental! We're thrilled to have you join our
+                premium car rental platform. Your account has been successfully
+                created with your email: <strong>{{email}}</strong>
+              </p>
+
+              <div class="feature-box">
+                <h3 style="margin-top: 0; color: #1e3c72">
+                  🌟 Premium Features Available to You:
+                </h3>
+                <ul style="padding-left: 20px; margin: 10px 0">
+                  <li>
+                    <strong>Real-time Availability:</strong> View our fleet's
+                    status in real-time
+                  </li>
+                  <li>
+                    <strong>Dynamic Pricing:</strong> Get the best rates based
+                    on duration and location
+                  </li>
+                  <li>
+                    <strong>Instant Booking:</strong> Secure your desired
+                    vehicle in minutes
+                  </li>
+                  <li>
+                    <strong>Live Updates:</strong> Receive real-time
+                    notifications about your rentals
+                  </li>
+                  <li>
+                    <strong>Flexible Returns:</strong> Multiple drop-off
+                    locations available
+                  </li>
+                </ul>
+              </div>
+
+              <div class="feature-box">
+                <h3 style="margin-top: 0; color: #1e3c72">
+                  🚗 Getting Started is Easy:
+                </h3>
+                <ol style="padding-left: 20px; margin: 10px 0">
+                  <li>
+                    Complete your profile and verify your driver's license
+                  </li>
+                  <li>Browse our extensive fleet with advanced filters</li>
+                  <li>Select your perfect vehicle and rental duration</li>
+                  <li>Use our secure payment system to confirm your booking</li>
+                </ol>
+              </div>
+
+              <p style="text-align: center">
+                <a href="{{APP_URL}}/dashboard" class="button"
+                  >Access Your Dashboard</a
+                >
+              </p>
+
+              <div class="feature-box" style="background-color: #e8f4ff">
+                <h3 style="margin-top: 0; color: #1e3c72">💡 Pro Tips:</h3>
+                <p>
+                  • Enable notifications to stay updated about special offers
+                </p>
+                <p>• Download our mobile app for on-the-go management</p>
+                <p>• Check our dynamic pricing for the best deals</p>
+              </div>
+
+              <p>
+                Our 24/7 customer support team is always here to assist you with
+                any questions or concerns. Contact us anytime through our
+                support portal or emergency hotline.
+              </p>
+
+              <p>Happy driving!<br />The CarRental Team</p>
+            </div>
+
+            <!-- Footer -->
+            <div class="footer">
+              <p>© 2024 CarRental. All rights reserved.</p>
+              <p>
+                24/7 Support: moemensaadeh936@gmail.com | Emergency: +90 (552)
+                647-0243
+              </p>
+              <p style="margin: 10px 0">
+                <a
+                  href="{{APP_URL}}/terms"
+                  style="color: #1e3c72; text-decoration: none"
+                  >Terms of Service</a
+                >
+                •
+                <a
+                  href="{{APP_URL}}/privacy"
+                  style="color: #1e3c72; text-decoration: none"
+                  >Privacy Policy</a
+                >
+                •
+                <a
+                  href="{{APP_URL}}/faq"
+                  style="color: #1e3c72; text-decoration: none"
+                  >FAQ</a
+                >
+              </p>
+              <p>
+                Follow us on
+                <a href="#" style="color: #1e3c72; text-decoration: none"
+                  >Facebook</a
+                >
+                and
+                <a href="#" style="color: #1e3c72; text-decoration: none"
+                  >Instagram</a
+                >
+              </p>
+            </div>
+          </div>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

@@ -15,12 +15,14 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { User } from './schemas/user.schema';
+import { EmailService } from '@app/common/modules/email/email.service';
 
 @Injectable()
 export class UserServiceService {
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<User>,
     private readonly jwtService: JwtService,
+    private readonly emailService: EmailService,
   ) {}
 
   async registerUser({
@@ -51,6 +53,11 @@ export class UserServiceService {
       };
 
       const accessToken = await this.jwtService.signAsync(payload);
+
+      if (accessToken) {
+        // Send Welcome Email :)
+        this.emailService.sendRegistrationEmail(email, fullName);
+      }
 
       return { access_token: accessToken };
     } catch (error) {
