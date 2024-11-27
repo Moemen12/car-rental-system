@@ -49,6 +49,15 @@
         "tsConfigPath": "apps/rental-service/tsconfig.app.json"
       }
     },
+    "email-service": {
+      "type": "application",
+      "root": "apps/email-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/email-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/email-service/tsconfig.app.json"
+      }
+    },
     "common": {
       "type": "library",
       "root": "libs/common",
