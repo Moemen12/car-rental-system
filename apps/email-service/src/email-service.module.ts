@@ -5,7 +5,7 @@ import { EmailServiceService } from './email-service.service';
 import { CommonModule } from '@app/common';
 
 @Module({
-  imports: [CommonModule],
+  imports: [CommonModule.register()],
   controllers: [EmailServiceController],
   providers: [EmailServiceService],
   exports: [EmailServiceService],

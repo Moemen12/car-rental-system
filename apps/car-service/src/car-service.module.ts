@@ -4,7 +4,7 @@ import { CarServiceService } from './car-service.service';
 import { CommonModule } from '@app/common';
 
 @Module({
-  imports: [CommonModule],
+  imports: [CommonModule.register()],
   controllers: [CarServiceController],
   providers: [CarServiceService],
 })

@@ -4,7 +4,7 @@ import { RentalServiceService } from './rental-service.service';
 import { CommonModule } from '@app/common';
 
 @Module({
-  imports: [CommonModule],
+  imports: [CommonModule.register()],
   controllers: [RentalServiceController],
   providers: [RentalServiceService],
 })

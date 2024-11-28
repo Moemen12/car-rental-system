@@ -1,2 +1,6 @@
-/api/auth/login
-/api/auth/register
+/api/auth/login      post
+/api/auth/register   post
+/api/users/:id/profile  get
+/api/users/:id  delete
+
+

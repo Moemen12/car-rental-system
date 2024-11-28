@@ -1,8 +1,8 @@
-import { AuthAccessType, EmailRegistrationData } from '@app/common';
+import { AuthAccessType, EmailRegistrationData, UserInfo } from '@app/common';
 import { CreateUserDto } from '@app/common/dtos/create-user.dto';
 import { Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { isValidObjectId, Model } from 'mongoose';
 import {
   RethrowGeneralError,
   saltAndHashPassword,
@@ -13,6 +13,7 @@ import * as bcrypt from 'bcryptjs';
 import { User } from './schemas/user.schema';
 
 import { ClientProxy } from '@nestjs/microservices';
+import { ROLE } from '@app/database/types';
 
 @Injectable()
 export class UserServiceService {
@@ -21,6 +22,20 @@ export class UserServiceService {
     @Inject('EMAIL_SERVICE') private readonly rabbitClient: ClientProxy,
     private readonly jwtService: JwtService,
   ) {}
+
+  async findUserById(userId: string): Promise<boolean> {
+    try {
+      if (!isValidObjectId(userId)) {
+        throwCustomError('Invalid user ID format.', 400);
+      }
+
+      const isUserExist = await this.userModel.findById(userId).lean().exec();
+
+      return !!isUserExist;
+    } catch (error) {
+      throwCustomError(error, 400);
+    }
+  }
 
   async registerUser({
     email,
@@ -46,7 +61,7 @@ export class UserServiceService {
       const payload = {
         userId: user._id.toString(),
         email: user.email,
-        // role: existingUser.role,
+        role: ROLE.CUSTOMER,
       };
 
       const accessToken = await this.jwtService.signAsync(payload);
@@ -86,7 +101,7 @@ export class UserServiceService {
       const payload = {
         userId: existingUser._id.toString(),
         fullName: existingUser.fullName,
-        // role: existingUser.role,
+        role: existingUser.role,
       };
       const access_token = await this.jwtService.signAsync(payload);
 
@@ -96,5 +111,25 @@ export class UserServiceService {
     } catch (error) {
       RethrowGeneralError(error);
     }
+  }
+
+  async getUserProfile(id: string): Promise<UserInfo> {
+    const userDetails = await this.userModel
+      .findById(id)
+      .lean()
+      .select('fullName role rentalHistory isActive')
+      .exec();
+
+    return userDetails;
+  }
+
+  async deleteUserAccount(id: string): Promise<{ deleted: boolean }> {
+    const result = await this.userModel.deleteOne({ _id: id }).exec();
+
+    if (result.deletedCount === 0) {
+      throwCustomError('User not found', 404);
+    }
+
+    return { deleted: true };
   }
 }

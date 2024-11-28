@@ -3,7 +3,7 @@ import { UserServiceService } from './user-service.service';
 import { MessagePattern } from '@nestjs/microservices';
 import { CreateUserDto } from '@app/common/dtos/create-user.dto';
 
-import { AuthAccessType } from '@app/common';
+import { AuthAccessType, UserInfo } from '@app/common';
 
 @Controller()
 export class UserServiceController {
@@ -19,5 +19,21 @@ export class UserServiceController {
     loginUserDto: Omit<CreateUserDto, 'fullName'>,
   ): Promise<AuthAccessType> {
     return await this.userServiceService.loginUser(loginUserDto);
+  }
+
+  @MessagePattern({ cmd: 'find-user-by-id' })
+  async findUserById(userId: string): Promise<boolean> {
+    return await this.userServiceService.findUserById(userId);
+  }
+
+  @MessagePattern({ cmd: 'get-user-profile' })
+  async getUserProfile(id: string): Promise<UserInfo> {
+    return await this.userServiceService.getUserProfile(id);
+  }
+
+  @MessagePattern({ cmd: 'delete-user-profile' })
+  async deleteUserAccount(id: string): Promise<void> {
+    await this.userServiceService.deleteUserAccount(id);
+    return;
   }
 }

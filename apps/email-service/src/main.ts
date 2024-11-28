@@ -4,10 +4,16 @@ import { ConfigService } from '@nestjs/config';
 import { EmailServiceModule } from './email-service.module';
 
 async function bootstrap() {
+  const appContext =
+    await NestFactory.createApplicationContext(EmailServiceModule);
+  const configService = appContext.get(ConfigService);
+
+  const host: string = configService.get('RABBITMQ_URL');
+
   const app = await NestFactory.createMicroservice(EmailServiceModule, {
     transport: Transport.RMQ,
     options: {
-      urls: [process.env.RABBITMQ_URL],
+      urls: [host],
       queue: 'email_queue',
       queueOptions: {
         durable: false,
