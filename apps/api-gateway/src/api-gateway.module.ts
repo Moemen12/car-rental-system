@@ -6,6 +6,7 @@ import { EmailServiceModule } from 'apps/email-service/src/email-service.module'
 import { seconds, ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
+import { CarModule } from './modules/car/car.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { APP_GUARD } from '@nestjs/core';
         ],
       }),
     }),
+    CarModule,
   ],
   controllers: [],
   providers: [

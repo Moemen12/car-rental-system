@@ -15,6 +15,7 @@ import { AuthController } from 'apps/api-gateway/src/modules/auth/auth.controlle
 import { EncryptionModule } from './modules/encryption/encryption.module';
 import { AuthGuard } from 'apps/api-gateway/src/modules/auth/guards/auth.guard';
 import { UsersController } from 'apps/api-gateway/src/modules/users/users.controller';
+import { CarController } from 'apps/api-gateway/src/modules/car/car.controller';
 
 @Global()
 @Module({})
@@ -53,6 +54,6 @@ export class CommonModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(PayloadEncryptionMiddleware)
-      .forRoutes(AuthController, UsersController);
+      .forRoutes(AuthController, UsersController, CarController);
   }
 }

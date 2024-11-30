@@ -24,3 +24,7 @@ export interface UserInfo {
   rentalHistory: Types.ObjectId[];
   isActive: boolean;
 }
+
+export interface SuccessMessage {
+  message: string;
+}

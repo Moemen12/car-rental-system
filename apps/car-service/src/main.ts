@@ -8,9 +8,8 @@ async function bootstrap() {
     await NestFactory.createApplicationContext(CarServiceModule);
   const configService = appContext.get(ConfigService);
 
-  //TODO update both here
-  const host: string = 'localhost';
-  const port: number = 3434;
+  const host: string = configService.get('CAR_SERVICE_HOST');
+  const port: number = configService.get('CAR_SERVICE_PORT');
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(
     CarServiceModule,
     {

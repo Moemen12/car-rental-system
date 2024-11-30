@@ -19,6 +19,7 @@ async function bootstrap() {
   app.useGlobalPipes(
     new ValidationPipe({
       stopAtFirstError: true,
+      transform: true,
     }),
   );
   app.useGlobalFilters(new RpcExceptionFilter());

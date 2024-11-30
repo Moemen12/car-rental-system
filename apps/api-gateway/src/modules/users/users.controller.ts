@@ -15,7 +15,6 @@ import { ObjectIdValidationPipe } from '@app/common/pipe/objectId-validation.pip
 import { ClientProxy } from '@nestjs/microservices';
 import { defaultIfEmpty, lastValueFrom } from 'rxjs';
 import { UserInfo } from '@app/common';
-import { throwCustomError } from '@app/common/utilities/general';
 
 @UseGuards(RolesGuard)
 @Controller('users')
