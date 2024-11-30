@@ -9,10 +9,10 @@ const VALID_COUNTRIES = Object.keys(countries).map(
 
 @Schema({ timestamps: true })
 export class Car extends Document {
-  @Prop({ required: true, type: String })
+  @Prop({ required: true, type: String, index: true })
   carModel: string;
 
-  @Prop({ required: true, type: String })
+  @Prop({ required: true, type: String, index: true })
   brand: string;
 
   @Prop({
@@ -22,10 +22,10 @@ export class Car extends Document {
   })
   type: CarType;
 
-  @Prop({ required: true, type: Number })
+  @Prop({ required: true, type: Number, index: true })
   basePrice: number;
 
-  @Prop({ required: true, type: Number })
+  @Prop({ required: true, type: Number, index: true })
   currentPrice: number;
 
   @Prop({
@@ -33,6 +33,7 @@ export class Car extends Document {
     type: String,
     enum: Object.values(Status),
     default: Status.AVAILABLE,
+    index: true,
   })
   status: Status;
 
@@ -48,6 +49,7 @@ export class Car extends Document {
     required: true,
     type: String,
     enum: VALID_COUNTRIES,
+    index: true,
   })
   location: string;
 }
