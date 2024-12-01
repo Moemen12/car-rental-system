@@ -3,5 +3,6 @@
 /api/users/:id/profile  get
 /api/users/:id  delete
 /api/cars  post
+/api/cars/search get
 
 

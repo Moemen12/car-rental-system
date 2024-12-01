@@ -1,5 +1,5 @@
 import { CreateCarDto } from '@app/common/dtos/create-car.dto';
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Car } from '../schemas/car.schema';
 import { Model } from 'mongoose';
@@ -8,6 +8,7 @@ import { SuccessMessage } from '@app/common';
 import { CarSearchDto } from '@app/common/dtos/search-car.dto';
 import { searchClient } from '@algolia/client-search';
 import { ConfigService } from '@nestjs/config';
+import { Cacheable } from 'cacheable';
 
 @Injectable()
 export class CarServiceService implements OnModuleInit {
@@ -15,6 +16,7 @@ export class CarServiceService implements OnModuleInit {
 
   constructor(
     @InjectModel(Car.name) private readonly carModel: Model<Car>,
+
     private readonly configService: ConfigService,
   ) {
     this.algoliaClient = searchClient(
@@ -134,13 +136,13 @@ export class CarServiceService implements OnModuleInit {
             'maintenanceStatus',
             'objectID',
           ],
-          getRankingInfo: true,
+          // getRankingInfo: true,
         },
       });
 
       // Clean up the hits by removing _highlightResult and _rankingInfo
       const cleanHits = searchResponse.hits.map((hit) => {
-        const { _highlightResult, _rankingInfo, ...cleanHit } = hit;
+        const { _highlightResult, ...cleanHit } = hit;
         return cleanHit;
       });
 
