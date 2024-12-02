@@ -4,11 +4,12 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Car } from '../schemas/car.schema';
 import { Model } from 'mongoose';
 import { throwCustomError } from '@app/common/utilities/general';
-import { SuccessMessage } from '@app/common';
+import { SuccessMessage, UpdateCarStatus } from '@app/common';
 import { CarSearchDto } from '@app/common/dtos/search-car.dto';
 import { searchClient } from '@algolia/client-search';
 import { ConfigService } from '@nestjs/config';
 import { Cacheable } from 'cacheable';
+import { UpdateCarStatusDto } from '@app/common/dtos/update-car-status.dto';
 
 @Injectable()
 export class CarServiceService implements OnModuleInit {
@@ -153,6 +154,43 @@ export class CarServiceService implements OnModuleInit {
       };
     } catch (error) {
       throwCustomError('Error performing search', 500);
+    }
+  }
+
+  async updateCarAvailability({
+    updateCarDto,
+    carId,
+  }: UpdateCarStatus): Promise<SuccessMessage> {
+    try {
+      // Update MongoDB
+      const updatedCar = await this.carModel
+        .findByIdAndUpdate(
+          carId,
+          {
+            status: updateCarDto.status,
+          },
+          { new: true },
+        )
+        .exec();
+
+      if (!updatedCar) {
+        throwCustomError('Car not found', 404);
+      }
+
+      // Sync with Algolia
+      await this.algoliaClient.partialUpdateObject({
+        indexName: 'cars_index',
+        objectID: carId,
+        attributesToUpdate: {
+          status: updateCarDto.status,
+        },
+        createIfNotExists: false,
+      });
+
+      return { message: 'Car updated successfully' };
+    } catch (error) {
+      console.error('Error updating car:', error);
+      throwCustomError('Error updating car status', 500);
     }
   }
 }

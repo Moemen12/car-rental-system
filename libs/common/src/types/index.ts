@@ -1,5 +1,6 @@
 import { ROLE } from '@app/database/types';
 import { Types } from 'mongoose';
+import { UpdateCarStatusDto } from '../dtos/update-car-status.dto';
 
 export interface AuthAccessType {
   access_token: string;
@@ -27,4 +28,9 @@ export interface UserInfo {
 
 export interface SuccessMessage {
   message: string;
+}
+
+export interface UpdateCarStatus {
+  updateCarDto: UpdateCarStatusDto;
+  carId: string;
 }

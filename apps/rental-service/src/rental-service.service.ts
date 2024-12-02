@@ -1,8 +1,11 @@
+import { CreateRentDto } from '@app/common/dtos/create-rent.dto';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class RentalServiceService {
-  getHello(): string {
-    return 'Hello World!';
+  async createRental(rentInfo: CreateRentDto) {
+    console.log(rentInfo);
+
+    return rentInfo;
   }
 }

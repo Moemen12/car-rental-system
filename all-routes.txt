@@ -4,5 +4,5 @@
 /api/users/:id  delete
 /api/cars  post
 /api/cars/search get
-
+/api/cars/:id/status patch
 

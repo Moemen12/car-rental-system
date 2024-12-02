@@ -7,6 +7,7 @@ import { seconds, ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { CarModule } from './modules/car/car.module';
+import { RentalModule } from './modules/rental/rental.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { CarModule } from './modules/car/car.module';
     UsersModule,
     AuthModule,
     EmailServiceModule,
+    RentalModule,
     ThrottlerModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({

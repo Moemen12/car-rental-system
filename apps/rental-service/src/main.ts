@@ -8,9 +8,8 @@ async function bootstrap() {
     await NestFactory.createApplicationContext(RentalServiceModule);
   const configService = appContext.get(ConfigService);
 
-  //TODO update both here
-  const host: string = 'localhost';
-  const port: number = 4322;
+  const host: string = configService.get('RENT_SERVICE_HOST');
+  const port: number = configService.get('RENT_SERVICE_PORT');
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(
     RentalServiceModule,
     {

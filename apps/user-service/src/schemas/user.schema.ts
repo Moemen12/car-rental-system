@@ -19,7 +19,7 @@ export class User extends Document {
   role: string;
 
   @Prop()
-  driversLicense: string;
+  driverLicense: string;
 
   @Prop({ type: Object })
   profile: {
