@@ -20,3 +20,9 @@ export enum MaintenanceStatus {
   GOOD = 'good',
   NEEDS_MAINTENANCE = 'needs_maintenance',
 }
+
+export enum RentalStatus {
+  ACTIVE = 'active',
+  COMPLETED = 'completed',
+  CANCELLED = 'cancelled',
+}
