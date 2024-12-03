@@ -1,0 +1,223 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Payment Confirmation - CarRental</title>
+    <style>
+      /* Reset styles */
+      body,
+      table,
+      td,
+      div,
+      p,
+      a {
+        margin: 0;
+        padding: 0;
+        -webkit-text-size-adjust: 100%;
+        -ms-text-size-adjust: 100%;
+        font-family: 'Segoe UI', Arial, sans-serif;
+        box-sizing: border-box;
+      }
+
+      /* Container styles */
+      .email-container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 10px;
+        background-color: #ffffff;
+        width: 100%;
+      }
+
+      /* Header styles */
+      .header {
+        text-align: center;
+        padding: 30px 0;
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        color: #ffffff;
+        border-radius: 8px 8px 0 0;
+      }
+
+      .logo {
+        width: 150px;
+        height: auto;
+        margin-bottom: 20px;
+      }
+
+      /* Content styles */
+      .content {
+        padding: 30px 10px;
+        line-height: 1.6;
+        color: #333333;
+      }
+
+      /* Feature box styles */
+      .feature-box {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 20px 0;
+        border-left: 4px solid #1e3c72;
+      }
+
+      /* Button styles */
+      .button {
+        display: inline-block;
+        padding: 14px 35px;
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        color: #ffffff !important;
+        text-decoration: none;
+        border-radius: 25px;
+        margin: 20px 0;
+        font-weight: bold;
+        transition: all 0.3s ease;
+      }
+
+      /* Footer styles */
+      .footer {
+        text-align: center;
+        padding: 20px;
+        background-color: #f8f9fa;
+        color: #666666;
+        font-size: 12px;
+        border-radius: 0 0 8px 8px;
+      }
+
+      /* Responsive styles */
+      @media screen and (max-width: 600px) {
+        .email-container {
+          width: 100% !important;
+        }
+
+        .content {
+          padding: 20px 15px !important;
+        }
+
+        .button {
+          width: 100% !important;
+          padding: 12px 20px;
+          font-size: 16px;
+        }
+
+        .feature-box {
+          padding: 15px !important;
+        }
+
+        .logo {
+          width: 120px;
+          margin-bottom: 15px;
+        }
+
+        body {
+          overflow-x: hidden;
+        }
+      }
+    </style>
+  </head>
+  <body style="margin: 0; padding: 0; background-color: #f4f4f4">
+    <table
+      role="presentation"
+      cellspacing="0"
+      cellpadding="0"
+      border="0"
+      align="center"
+      width="100%"
+      style="max-width: 600px; margin: auto"
+    >
+      <tr>
+        <td>
+          <div class="email-container">
+            <!-- Header -->
+            <div class="header">
+              <h1 style="color: #ffffff; margin: 0; font-size: medium">
+                Payment Confirmation for {{fullName}}
+              </h1>
+            </div>
+
+            <!-- Content -->
+            <div class="content">
+              <p>Dear {{fullName}},</p>
+
+              <p>
+                We have received your payment for the rental of the vehicle with
+                the following details:
+              </p>
+
+              <div class="feature-box">
+                <h3 style="margin-top: 0; color: #1e3c72">
+                  🚗 Payment Details:
+                </h3>
+                <ul style="padding-left: 20px; margin: 10px 0">
+                  <li><strong>Payment Amount:</strong> {{totalCost}}</li>
+                  <li><strong>Vehicle:</strong> {{carModel}}</li>
+                  <li><strong>Rental Duration:</strong> {{rentalDuration}}</li>
+                  <li><strong>Transaction ID:</strong> {{paymentIntentId}}</li>
+                  <li><strong>Payment Method:</strong> {{paymentMethod}}</li>
+                </ul>
+              </div>
+
+              <div class="feature-box" style="background-color: #e8f4ff">
+                <h3 style="margin-top: 0; color: #1e3c72">💡 Important:</h3>
+                <p>
+                  Please review the details above carefully. If everything is
+                  correct, click the "Confirm Payment" button to complete your
+                  transaction.
+                </p>
+              </div>
+
+              <a href="{{paymentConfirmationUrl}}" class="button"
+                >Confirm Payment</a
+              >
+
+              <p>
+                If you have any questions or need assistance, our customer
+                support team is available 24/7. You can reach us anytime through
+                our support portal or emergency hotline.
+              </p>
+
+              <p>Thank you for choosing CarRental!<br />The CarRental Team</p>
+            </div>
+
+            <!-- Footer -->
+            <div class="footer">
+              <p>© 2024 CarRental. All rights reserved.</p>
+              <p>
+                24/7 Support: moemensaadeh936@gmail.com | Emergency: +90 (552)
+                647-0243
+              </p>
+              <p style="margin: 10px 0">
+                <a
+                  href="{{APP_URL}}/terms"
+                  style="color: #1e3c72; text-decoration: none"
+                  >Terms of Service</a
+                >
+                •
+                <a
+                  href="{{APP_URL}}/privacy"
+                  style="color: #1e3c72; text-decoration: none"
+                  >Privacy Policy</a
+                >
+                •
+                <a
+                  href="{{APP_URL}}/faq"
+                  style="color: #1e3c72; text-decoration: none"
+                  >FAQ</a
+                >
+              </p>
+              <p>
+                Follow us on
+                <a href="#" style="color: #1e3c72; text-decoration: none"
+                  >Facebook</a
+                >
+                and
+                <a href="#" style="color: #1e3c72; text-decoration: none"
+                  >Instagram</a
+                >
+              </p>
+            </div>
+          </div>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

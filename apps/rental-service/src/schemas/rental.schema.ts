@@ -1,4 +1,4 @@
-import { RentalStatus } from '@app/database/types';
+// rental.schema.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 
@@ -21,34 +21,10 @@ export class Rental extends Document {
 
   @Prop({
     required: true,
-    type: String,
-    enum: Object.values(RentalStatus),
-    default: RentalStatus.ACTIVE,
+    enum: ['pending', 'confirmed', 'cancelled', 'completed', 'failed'],
+    default: 'pending',
   })
-  status: RentalStatus;
-
-  @Prop({ required: true })
-  pickupLocation: string;
-
-  @Prop({ required: true })
-  returnLocation: string;
-
-  @Prop({ type: [{ type: Object }] })
-  penalties: {
-    type: string;
-    amount: number;
-    description: string;
-    isPaid: boolean;
-    createdAt: Date;
-  }[];
-
-  @Prop({ type: Object })
-  invoice: {
-    amount: number;
-    status: string;
-    dueDate: Date;
-    paidAt: Date;
-  };
+  status: string;
 }
 
 export const RentalSchema = SchemaFactory.createForClass(Rental);

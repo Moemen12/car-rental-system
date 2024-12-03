@@ -1,7 +1,10 @@
 import { Controller } from '@nestjs/common';
-import { EventPattern } from '@nestjs/microservices';
+import { EventPattern, MessagePattern } from '@nestjs/microservices';
 
-import { EmailRegistrationData } from '@app/common/types';
+import {
+  EmailConfirmationData,
+  EmailRegistrationData,
+} from '@app/common/types';
 import { EmailServiceService } from './email-service.service';
 
 @Controller()
@@ -15,6 +18,13 @@ export class EmailServiceController {
     return await this.emailServiceService.sendRegistrationEmail(
       email,
       fullName,
+    );
+  }
+
+  @MessagePattern({ cmd: 'payment-confirmation-email' })
+  async sendPaymentConfirmation(emailConfirmationData: EmailConfirmationData) {
+    return await this.emailServiceService.sendPaymentConfirmation(
+      emailConfirmationData,
     );
   }
 }

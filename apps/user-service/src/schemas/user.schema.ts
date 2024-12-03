@@ -21,11 +21,16 @@ export class User extends Document {
   @Prop()
   driverLicense: string;
 
-  @Prop({ type: Object })
+  @Prop({
+    type: Object,
+    default: {},
+  })
   profile: {
-    address: string;
-    preferredPaymentMethod: string;
-    documents: Record<string, any>;
+    address?: string;
+    preferredPaymentMethod?: string;
+    documents?: Record<string, any>;
+    phoneNumber?: string;
+    dateOfBirth?: Date;
   };
 
   @Prop({ type: Boolean, default: true })

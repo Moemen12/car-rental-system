@@ -10,7 +10,8 @@ export interface AuthAccessType {
 
 export interface HeaderData {
   userId: string;
-  username: string;
+  fullName: string;
+  email: string;
   role: ROLE;
   iat: number;
   exp: number;
@@ -38,3 +39,18 @@ export interface UpdateCarStatus {
 }
 
 export type RentCar = HeaderData & CreateRentDto;
+
+export interface CarInfo {
+  currentPrice: number;
+  carModel: string;
+}
+
+export interface EmailConfirmationData {
+  email: string;
+  fullName: string;
+  totalCost: number;
+  carModel: string;
+  paymentIntentId: string;
+  rentalDuration: string;
+  paymentMethod: string;
+}

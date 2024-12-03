@@ -4,7 +4,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Car } from '../schemas/car.schema';
 import { Model } from 'mongoose';
 import { throwCustomError } from '@app/common/utilities/general';
-import { SuccessMessage, UpdateCarStatus } from '@app/common';
+import { CarInfo, SuccessMessage, UpdateCarStatus } from '@app/common';
 import { CarSearchDto } from '@app/common/dtos/search-car.dto';
 import { searchClient } from '@algolia/client-search';
 import { ConfigService } from '@nestjs/config';
@@ -192,5 +192,14 @@ export class CarServiceService implements OnModuleInit {
       console.error('Error updating car:', error);
       throwCustomError('Error updating car status', 500);
     }
+  }
+
+  async getCarData(carId: string): Promise<CarInfo> {
+    const dataInfo = await this.carModel
+      .findById(carId)
+      .select('currentPrice carModel')
+      .lean()
+      .exec();
+    return dataInfo;
   }
 }

@@ -11,7 +11,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '@app/common/decorators/role.decorator';
 import { ROLE } from '@app/database/types';
 import { UserOwnershipGuard } from 'apps/api-gateway/src/modules/auth/guards/user-ownership.guard';
-import { ObjectIdValidationPipe } from '@app/common/validations/objectId-validation.pipe';
+import { ObjectIdValidationPipe } from '@app/common/pipe/objectId-validation.pipe';
 import { ClientProxy } from '@nestjs/microservices';
 import { defaultIfEmpty, lastValueFrom } from 'rxjs';
 import { UserInfo } from '@app/common';

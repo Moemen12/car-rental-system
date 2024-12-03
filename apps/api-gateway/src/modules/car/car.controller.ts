@@ -18,7 +18,7 @@ import { CreateCarDto } from '@app/common/dtos/create-car.dto';
 import { lastValueFrom } from 'rxjs';
 import { SuccessMessage, UpdateCarStatus } from '@app/common';
 import { UpdateCarStatusDto } from '@app/common/dtos/update-car-status.dto';
-import { ObjectIdValidationPipe } from '@app/common/validations/objectId-validation.pipe';
+import { ObjectIdValidationPipe } from '@app/common/pipe/objectId-validation.pipe';
 import { CarSearchDto } from '@app/common/dtos/search-car.dto';
 import { Cache, CACHE_MANAGER, CacheInterceptor } from '@nestjs/cache-manager';
 

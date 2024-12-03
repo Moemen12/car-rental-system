@@ -4,11 +4,13 @@ import * as path from 'path';
 import * as nodemailer from 'nodemailer';
 import Mail from 'nodemailer/lib/mailer';
 import { ConfigService } from '@nestjs/config';
+import { EmailConfirmationData } from '@app/common';
 
 @Injectable()
 export class EmailServiceService {
   private transporter: nodemailer.Transporter;
   private registrationEmailTemplate: string;
+  private paymentConfirmationTemplate: string;
 
   constructor(private readonly configService: ConfigService) {
     this.transporter = nodemailer.createTransport({
@@ -30,6 +32,11 @@ export class EmailServiceService {
       path.join(templatesPath, 'registration-email.html'),
       'utf8',
     );
+
+    this.paymentConfirmationTemplate = fs.readFileSync(
+      path.join(templatesPath, 'payment.html'),
+      'utf8',
+    );
   }
 
   async sendRegistrationEmail(email: string, fullName: string) {
@@ -41,6 +48,34 @@ export class EmailServiceService {
       from: this.configService.get<string>('EMAIL_USER'),
       to: email,
       subject: '🚗 Welcome to CarRental - Your Account is Ready!',
+      html: htmlContent,
+    };
+
+    return await this.transporter.sendMail(mailOptions);
+  }
+
+  async sendPaymentConfirmation({
+    email,
+    fullName,
+    totalCost,
+    carModel,
+    rentalDuration,
+    paymentIntentId,
+    paymentMethod,
+  }: EmailConfirmationData) {
+    const htmlContent = this.paymentConfirmationTemplate
+      .replace(/{{fullName}}/g, fullName)
+      .replace('{{email}}', email)
+      .replace('{{totalCost}}', String(totalCost))
+      .replace('{{carModel}}', carModel)
+      .replace('{{rentalDuration}}', rentalDuration)
+      .replace('{{paymentIntentId}}', paymentIntentId)
+      .replace('{{paymentMethod}}', paymentMethod);
+
+    const mailOptions: Mail.Options = {
+      from: this.configService.get<string>('EMAIL_USER'),
+      to: email,
+      subject: '🚗 Reservation Confirmation',
       html: htmlContent,
     };
 

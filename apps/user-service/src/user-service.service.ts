@@ -61,6 +61,7 @@ export class UserServiceService {
       const payload = {
         userId: user._id.toString(),
         email: user.email,
+        fullName: user.fullName,
         role: ROLE.CUSTOMER,
       };
 
@@ -100,6 +101,7 @@ export class UserServiceService {
     try {
       const payload = {
         userId: existingUser._id.toString(),
+        email: existingUser.email,
         fullName: existingUser.fullName,
         role: existingUser.role,
       };
