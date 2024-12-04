@@ -1,7 +1,6 @@
 import { ROLE } from '@app/database/types';
 import { Types } from 'mongoose';
 import { UpdateCarStatusDto } from '../dtos/update-car-status.dto';
-import { CreateUserDto } from '../dtos/create-user.dto';
 import { CreateRentDto } from '../dtos/create-rent.dto';
 
 export interface AuthAccessType {
@@ -53,4 +52,15 @@ export interface EmailConfirmationData {
   paymentIntentId: string;
   rentalDuration: string;
   paymentMethod: string;
+  currency: string;
+}
+
+export interface UpdateUserRentals {
+  userId: string;
+  rentalId: string;
+}
+
+export interface PaymentConfirmation {
+  headerData: HeaderData;
+  paymentId: string;
 }

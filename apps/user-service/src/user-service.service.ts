@@ -1,4 +1,9 @@
-import { AuthAccessType, EmailRegistrationData, UserInfo } from '@app/common';
+import {
+  AuthAccessType,
+  EmailRegistrationData,
+  UpdateUserRentals,
+  UserInfo,
+} from '@app/common';
 import { CreateUserDto } from '@app/common/dtos/create-user.dto';
 import { Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
@@ -14,6 +19,7 @@ import { User } from './schemas/user.schema';
 
 import { ClientProxy } from '@nestjs/microservices';
 import { ROLE } from '@app/database/types';
+import { Rental } from 'apps/rental-service/src/schemas/rental.schema';
 
 @Injectable()
 export class UserServiceService {
@@ -133,5 +139,13 @@ export class UserServiceService {
     }
 
     return { deleted: true };
+  }
+
+  async addingRentedCar(data: UpdateUserRentals) {
+    return await this.userModel
+      .findByIdAndUpdate(data.userId, {
+        $push: { rentalHistory: data.rentalId },
+      })
+      .exec();
   }
 }

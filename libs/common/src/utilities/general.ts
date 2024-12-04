@@ -4,6 +4,13 @@ import * as bcrypt from 'bcryptjs';
 import { MemoryStoredFile } from 'nestjs-form-data';
 import Tesseract from 'tesseract.js';
 import sharp from 'sharp';
+import * as crypto from 'crypto';
+
+const ENCRYPTION_KEY = Buffer.from(
+  'f3f4b9d9ac56c5e3a4e5b0cdb173a1f8',
+  'hex',
+).slice(0, 16);
+const ALGORITHM = 'aes-128-ecb';
 
 export async function saltAndHashPassword(password: string): Promise<string> {
   const saltRounds = 10;
@@ -141,4 +148,24 @@ function cleanText(text: string): string {
     .replace(/[()[\]{}]/g, '') // Remove brackets
     .trim()
     .toLowerCase();
+}
+
+export function encrypt(text: string): string {
+  try {
+    const cipher = crypto.createCipheriv(ALGORITHM, ENCRYPTION_KEY, null);
+    return cipher.update(text, 'utf8', 'base64') + cipher.final('base64');
+  } catch (error) {
+    throwCustomError('Encryption failed', 500);
+  }
+}
+
+export function decrypt(encryptedText: string): string {
+  try {
+    const decipher = crypto.createDecipheriv(ALGORITHM, ENCRYPTION_KEY, null);
+    return (
+      decipher.update(encryptedText, 'base64', 'utf8') + decipher.final('utf8')
+    );
+  } catch (error) {
+    throwCustomError('You are not authorized to perform this action.', 401);
+  }
 }

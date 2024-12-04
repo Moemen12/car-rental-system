@@ -3,7 +3,7 @@ import { UserServiceService } from './user-service.service';
 import { MessagePattern } from '@nestjs/microservices';
 import { CreateUserDto } from '@app/common/dtos/create-user.dto';
 
-import { AuthAccessType, UserInfo } from '@app/common';
+import { AuthAccessType, UpdateUserRentals, UserInfo } from '@app/common';
 
 @Controller()
 export class UserServiceController {
@@ -35,5 +35,10 @@ export class UserServiceController {
   async deleteUserAccount(id: string): Promise<void> {
     await this.userServiceService.deleteUserAccount(id);
     return;
+  }
+
+  @MessagePattern({ cmd: 'adding-rented-car' })
+  async addingRentedCar(data: UpdateUserRentals) {
+    return await this.userServiceService.addingRentedCar(data);
   }
 }

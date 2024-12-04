@@ -148,7 +148,9 @@
                   🚗 Payment Details:
                 </h3>
                 <ul style="padding-left: 20px; margin: 10px 0">
-                  <li><strong>Payment Amount:</strong> {{totalCost}}</li>
+                  <li>
+                    <strong>Payment Amount:</strong> {{totalCost}} {{currency}}
+                  </li>
                   <li><strong>Vehicle:</strong> {{carModel}}</li>
                   <li><strong>Rental Duration:</strong> {{rentalDuration}}</li>
                   <li><strong>Transaction ID:</strong> {{paymentIntentId}}</li>
@@ -165,7 +167,7 @@
                 </p>
               </div>
 
-              <a href="{{paymentConfirmationUrl}}" class="button"
+              <a target="_blank" href="{{confirmationUrl}}" class="button"
                 >Confirm Payment</a
               >
 

@@ -5,6 +5,7 @@ import * as nodemailer from 'nodemailer';
 import Mail from 'nodemailer/lib/mailer';
 import { ConfigService } from '@nestjs/config';
 import { EmailConfirmationData } from '@app/common';
+import { encrypt } from '@app/common/utilities/general';
 
 @Injectable()
 export class EmailServiceService {
@@ -62,7 +63,10 @@ export class EmailServiceService {
     rentalDuration,
     paymentIntentId,
     paymentMethod,
+    currency,
   }: EmailConfirmationData) {
+    const encryptedId = encrypt(paymentIntentId);
+    const CONFIRMATION_URL: string = `${this.configService.get('APP_URL')}/rentals/payment-confirmation/${encryptedId}`;
     const htmlContent = this.paymentConfirmationTemplate
       .replace(/{{fullName}}/g, fullName)
       .replace('{{email}}', email)
@@ -70,7 +74,9 @@ export class EmailServiceService {
       .replace('{{carModel}}', carModel)
       .replace('{{rentalDuration}}', rentalDuration)
       .replace('{{paymentIntentId}}', paymentIntentId)
-      .replace('{{paymentMethod}}', paymentMethod);
+      .replace('{{paymentMethod}}', paymentMethod)
+      .replace('{{currency}}', currency)
+      .replace('{{confirmationUrl}}', CONFIRMATION_URL);
 
     const mailOptions: Mail.Options = {
       from: this.configService.get<string>('EMAIL_USER'),

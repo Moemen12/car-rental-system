@@ -34,6 +34,17 @@ import { seconds } from '@nestjs/throttler';
           },
         }),
       },
+      {
+        name: 'USER_SERVICE',
+        inject: [ConfigService],
+        useFactory: (configService: ConfigService) => ({
+          transport: Transport.TCP,
+          options: {
+            host: configService.get('USER_SERVICE_HOST'),
+            port: configService.get('USER_SERVICE_PORT'),
+          },
+        }),
+      },
       ,
       {
         name: 'RENTAL_EMAIL_SERVICE',

@@ -1,14 +1,21 @@
-import { CarInfo, EmailConfirmationData, RentCar } from '@app/common';
+import {
+  CarInfo,
+  EmailConfirmationData,
+  HeaderData,
+  RentCar,
+  UpdateUserRentals,
+} from '@app/common';
 import { Inject, Injectable, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Rental } from './schemas/rental.schema';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { ClientProxy } from '@nestjs/microservices';
 import { lastValueFrom } from 'rxjs';
 import { ConfigService } from '@nestjs/config';
 import Stripe from 'stripe';
 import { Payment } from './schemas/payment.schema';
-import { throwCustomError } from '@app/common/utilities/general';
+import { decrypt, throwCustomError } from '@app/common/utilities/general';
+import { confirmationHtml } from './constants';
 
 @Injectable()
 export class RentalServiceService {
@@ -20,6 +27,7 @@ export class RentalServiceService {
     @Inject('CAR_SERVICE') private readonly carClient: ClientProxy,
     @Inject('RENTAL_EMAIL_SERVICE')
     private readonly rentEmailCLient: ClientProxy,
+    @Inject('USER_SERVICE') private readonly userClient: ClientProxy,
     private readonly configService: ConfigService,
   ) {
     this.stripe = new Stripe(this.configService.get('STRIPE_API_KEY'));
@@ -33,6 +41,7 @@ export class RentalServiceService {
     email,
     fullName,
   }: RentCar) {
+    const CURRENCY = 'usd';
     try {
       // 1. Get car data and calculate cost
       const { currentPrice, carModel }: CarInfo = await lastValueFrom(
@@ -58,7 +67,7 @@ export class RentalServiceService {
       // 3. Create a PaymentIntent
       const paymentIntent = await this.stripe.paymentIntents.create({
         amount: Math.round(totalCost * 100), // Convert to cents
-        currency: 'usd',
+        currency: CURRENCY,
         metadata: {
           rentalId: rental._id.toString(),
           carId,
@@ -72,11 +81,11 @@ export class RentalServiceService {
         },
       });
 
-      // 4. Create payment record
+      // // 4. Create payment record
       await this.paymentModel.create({
         rentalId: rental._id,
         amount: totalCost,
-        currency: 'usd',
+        currency: CURRENCY,
         paymentIntentId: paymentIntent.id,
         clientSecret: paymentIntent.client_secret,
         status: 'pending',
@@ -96,9 +105,22 @@ export class RentalServiceService {
         paymentIntentId: paymentIntent.id,
         rentalDuration,
         paymentMethod,
+        currency: CURRENCY,
       };
 
-      return await lastValueFrom(
+      const rentalId = rental._id.toString();
+
+      console.log(rentalId);
+
+      const data: UpdateUserRentals = {
+        userId,
+        rentalId,
+      };
+      await lastValueFrom(
+        this.userClient.send({ cmd: 'adding-rented-car' }, data),
+      );
+
+      await lastValueFrom(
         this.rentEmailCLient.send(
           { cmd: 'payment-confirmation-email' },
           emailConfirmationData,
@@ -106,10 +128,11 @@ export class RentalServiceService {
       );
       // 5. Return the client_secret and rental details
       return {
-        clientSecret: paymentIntent.client_secret,
-        paymentIntentId: paymentIntent.id,
-        rentalId: rental._id,
-        totalCost,
+        // clientSecret: paymentIntent.client_secret,
+        // paymentIntentId: paymentIntent.id,
+        // rentalId: rental._id,
+        // totalCost,
+        anything: 'anything',
       };
     } catch (error) {
       console.log(error);
@@ -118,71 +141,61 @@ export class RentalServiceService {
     }
   }
 
-  async handleStripeWebhook(event: Stripe.Event) {
-    try {
-      if (event.type === 'payment_intent.succeeded') {
-        const paymentIntent = event.data.object as Stripe.PaymentIntent;
-        const rentalId = paymentIntent.metadata.rentalId;
+  async confirmRenting(paymentId: string, headerData: HeaderData) {
+    const decryptedPaymentId = decrypt(paymentId);
 
-        await Promise.all([
-          this.paymentModel.findOneAndUpdate(
-            { paymentIntentId: paymentIntent.id },
-            {
-              status: 'succeeded',
-              metadata: paymentIntent.metadata,
-            },
-          ),
-          this.rentalModel.findByIdAndUpdate(rentalId, { status: 'confirmed' }),
-        ]);
-      }
+    // Fetch payment from database
+    const payment = await this.paymentModel
+      .findOne({
+        paymentIntentId: decryptedPaymentId,
+        customerId: headerData.userId,
+      })
+      .lean()
+      .exec();
 
-      if (event.type === 'payment_intent.payment_failed') {
-        const paymentIntent = event.data.object as Stripe.PaymentIntent;
-        const rentalId = paymentIntent.metadata.rentalId;
+    const rental = await this.rentalModel
+      .findOne({ _id: payment.rentalId })
+      .populate('carId') // Populates the car details
+      .exec();
 
-        await Promise.all([
-          this.paymentModel.findOneAndUpdate(
-            { paymentIntentId: paymentIntent.id },
-            {
-              status: 'failed',
-              errorMessage: paymentIntent.last_payment_error?.message,
-              metadata: paymentIntent.metadata,
-            },
-          ),
-          this.rentalModel.findByIdAndUpdate(rentalId, { status: 'failed' }),
-        ]);
-      }
-    } catch (error) {
-      throw new BadRequestException('Failed to process webhook event');
+    // Validate payment
+    if (!payment) {
+      throwCustomError('Payment not found', 404);
     }
-  }
 
-  async refundPayment(rentalId: string, amount?: number) {
+    if (payment.status === 'confirmed') {
+      throwCustomError('Payment has already been confirmed.', 409);
+    }
+
     try {
-      const payment = await this.paymentModel.findOne({ rentalId });
-      if (!payment) {
-        throwCustomError('Payment not found', 400);
+      const [stripeConfirmation, updatedPayment] = await Promise.all([
+        this.stripe.paymentIntents.confirm(decryptedPaymentId, {
+          payment_method: 'pm_card_visa',
+        }),
+        this.paymentModel
+          .findOneAndUpdate(
+            {
+              paymentIntentId: decryptedPaymentId,
+              customerId: headerData.userId,
+            },
+            { status: 'confirmed' },
+            { new: true },
+          )
+          .exec(),
+        // this.rentalModel.fin
+      ]);
+
+      if (!updatedPayment) {
+        throwCustomError('Failed to update payment status', 500);
       }
 
-      const refund = await this.stripe.refunds.create({
-        payment_intent: payment.paymentIntentId,
-        amount: amount ? Math.round(amount * 100) : undefined,
-      });
-
-      await this.paymentModel.findByIdAndUpdate(payment._id, {
-        status: 'refunded',
-        refundId: refund.id,
-        refundedAmount: refund.amount / 100,
-        refundedAt: new Date(),
-      });
-
-      await this.rentalModel.findByIdAndUpdate(rentalId, {
-        status: 'cancelled',
-      });
-
-      return refund;
+      return confirmationHtml;
     } catch (error) {
-      throwCustomError(error.message || 'Failed to process refund', 400);
+      if (error.type === 'StripeInvalidRequestError') {
+        throwCustomError(`Stripe error: ${error.message}`, 400);
+      }
+
+      throwCustomError('An error occurred during payment confirmation.', 500);
     }
   }
 }
