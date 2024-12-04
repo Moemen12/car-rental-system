@@ -7,6 +7,7 @@ import { Rental, RentalSchema } from './schemas/rental.schema';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ConfigService } from '@nestjs/config';
 import { Payment, PaymentSchema } from './schemas/payment.schema';
+import { seconds } from '@nestjs/throttler';
 
 @Module({
   imports: [
@@ -33,16 +34,23 @@ import { Payment, PaymentSchema } from './schemas/payment.schema';
           },
         }),
       },
-    ]),
-    ClientsModule.registerAsync([
+      ,
       {
-        name: 'RENT_EMAIL_SERVICE',
+        name: 'RENTAL_EMAIL_SERVICE',
         inject: [ConfigService],
         useFactory: (configService: ConfigService) => ({
-          transport: Transport.TCP,
+          transport: Transport.RMQ,
           options: {
-            host: configService.get('RENT_EMAIL_SERVICE_HOST'),
-            port: configService.get('RENT_EMAIL_SERVICE_PORT'),
+            urls: [configService.get<string>('RABBITMQ_URL')],
+            queue: configService.get('RENTAL_EMAIL_QUEUE_NAME'),
+            queueOptions: {
+              durable: true,
+              arguments: {
+                'x-message-ttl': seconds(
+                  configService.get('RENTAL_EMAIL_QUEUE_TTL'),
+                ),
+              },
+            },
           },
         }),
       },

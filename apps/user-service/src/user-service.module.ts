@@ -6,7 +6,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { User, userSchema } from './schemas/user.schema';
 import { ConfigService } from '@nestjs/config';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { EmailServiceModule } from 'apps/email-service/src/email-service.module';
+import { days } from '@nestjs/throttler';
 
 @Module({
   imports: [
@@ -19,21 +19,25 @@ import { EmailServiceModule } from 'apps/email-service/src/email-service.module'
     CommonModule.register(),
     ClientsModule.registerAsync([
       {
-        name: 'EMAIL_SERVICE',
+        name: 'USER_EMAIL_SERVICE',
         inject: [ConfigService],
         useFactory: (configService: ConfigService) => ({
           transport: Transport.RMQ,
           options: {
             urls: [configService.get<string>('RABBITMQ_URL')],
-            queue: 'email_queue',
+            queue: configService.get('USER_EMAIL_QUEUE_NAME'),
             queueOptions: {
-              durable: false,
+              durable: true,
+              arguments: {
+                'x-message-ttl': days(
+                  configService.get('USER_EMAIL_QUEUE_TTL'),
+                ),
+              },
             },
           },
         }),
       },
     ]),
-    EmailServiceModule,
   ],
   controllers: [UserServiceController],
   providers: [UserServiceService],

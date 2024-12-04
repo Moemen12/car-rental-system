@@ -19,7 +19,7 @@ import { ROLE } from '@app/database/types';
 export class UserServiceService {
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<User>,
-    @Inject('EMAIL_SERVICE') private readonly rabbitClient: ClientProxy,
+    @Inject('USER_EMAIL_SERVICE') private readonly rabbitClient: ClientProxy,
     private readonly jwtService: JwtService,
   ) {}
 

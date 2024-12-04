@@ -18,7 +18,8 @@ export class RentalServiceService {
     @InjectModel(Rental.name) private readonly rentalModel: Model<Rental>,
     @InjectModel(Payment.name) private readonly paymentModel: Model<Payment>,
     @Inject('CAR_SERVICE') private readonly carClient: ClientProxy,
-    @Inject('RENT_EMAIL_SERVICE') private readonly rentEmailCLient: ClientProxy,
+    @Inject('RENTAL_EMAIL_SERVICE')
+    private readonly rentEmailCLient: ClientProxy,
     private readonly configService: ConfigService,
   ) {
     this.stripe = new Stripe(this.configService.get('STRIPE_API_KEY'));
