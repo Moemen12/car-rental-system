@@ -4,6 +4,7 @@ import { CarServiceService } from './car-service.service';
 import { CommonModule } from '@app/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Car, carSchema } from '../schemas/car.schema';
+import { AlgoliaService } from '@app/common/services';
 
 @Module({
   imports: [
@@ -16,6 +17,6 @@ import { Car, carSchema } from '../schemas/car.schema';
     CommonModule.register(),
   ],
   controllers: [CarServiceController],
-  providers: [CarServiceService],
+  providers: [CarServiceService, AlgoliaService],
 })
 export class CarServiceModule {}

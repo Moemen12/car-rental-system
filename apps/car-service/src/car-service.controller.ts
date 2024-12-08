@@ -36,4 +36,9 @@ export class CarServiceController {
   async getCarData(carId: string): Promise<CarInfo> {
     return await this.carServiceService.getCarData(carId);
   }
+
+  @MessagePattern({ cmd: 'update-car-rental-details' })
+  async updateCarStatus(carId: string): Promise<boolean> {
+    return await this.carServiceService.updateCarStatus(carId);
+  }
 }

@@ -1,46 +1,33 @@
 import { CreateCarDto } from '@app/common/dtos/create-car.dto';
-import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Car } from '../schemas/car.schema';
 import { Model } from 'mongoose';
 import { throwCustomError } from '@app/common/utilities/general';
 import { CarInfo, SuccessMessage, UpdateCarStatus } from '@app/common';
 import { CarSearchDto } from '@app/common/dtos/search-car.dto';
-import { searchClient } from '@algolia/client-search';
-import { ConfigService } from '@nestjs/config';
-import { Cacheable } from 'cacheable';
-import { UpdateCarStatusDto } from '@app/common/dtos/update-car-status.dto';
+import { AlgoliaService } from '@app/common/services';
+import { Status } from '@app/database/types';
 
 @Injectable()
 export class CarServiceService implements OnModuleInit {
-  private readonly algoliaClient: ReturnType<typeof searchClient>;
-
   constructor(
     @InjectModel(Car.name) private readonly carModel: Model<Car>,
+    private readonly algoliaService: AlgoliaService,
+  ) {}
 
-    private readonly configService: ConfigService,
-  ) {
-    this.algoliaClient = searchClient(
-      this.configService.get('ALGOLIA_APP_ID'),
-      this.configService.get('ALGOLIA_API_KEY'),
-    );
-  }
+  private readonly carIndex = 'cars_index';
 
   async onModuleInit() {
-    // Configure Algolia index settings
-    await this.algoliaClient.setSettings({
-      indexName: 'cars_index',
-      indexSettings: {
-        searchableAttributes: ['carModel', 'brand', 'location'],
-        attributesForFaceting: [
-          'brand',
-          'status',
-          'location',
-          'type',
-          'numericFilters(currentPrice)',
-        ],
-      },
-      forwardToReplicas: true,
+    await this.algoliaService.initIndex(this.carIndex, {
+      searchableAttributes: ['carModel', 'brand', 'location'],
+      attributesForFaceting: [
+        'filterOnly(brand)',
+        'filterOnly(status)',
+        'filterOnly(location)',
+        'filterOnly(type)',
+        'numericFilters(currentPrice)',
+      ],
     });
   }
 
@@ -65,20 +52,16 @@ export class CarServiceService implements OnModuleInit {
       const createdCar = await this.carModel.create(createCarDto);
 
       if (createdCar) {
-        // Manually sync with Algolia
-        await this.algoliaClient.saveObject({
-          indexName: 'cars_index',
-          body: {
-            objectID: createdCar._id.toString(),
-            carModel: createdCar.carModel,
-            brand: createdCar.brand,
-            type: createdCar.type,
-            basePrice: createdCar.basePrice,
-            currentPrice: createdCar.currentPrice,
-            status: createdCar.status,
-            maintenanceStatus: createdCar.maintenanceStatus,
-            location: createdCar.location,
-          },
+        await this.algoliaService.saveObject(this.carIndex, {
+          objectID: createdCar._id.toString(),
+          carModel: createdCar.carModel,
+          brand: createdCar.brand,
+          type: createdCar.type,
+          basePrice: createdCar.basePrice,
+          currentPrice: createdCar.currentPrice,
+          status: createdCar.status,
+          maintenanceStatus: createdCar.maintenanceStatus,
+          location: createdCar.location,
         });
 
         return { message: 'Car added successfully' };
@@ -105,45 +88,47 @@ export class CarServiceService implements OnModuleInit {
       const numericFilters = [];
       if (priceRange) {
         const [minPrice, maxPrice] = priceRange.split('-').map(Number);
-        if (!isNaN(minPrice))
+        if (!isNaN(minPrice)) {
           numericFilters.push(`currentPrice >= ${minPrice}`);
-        if (!isNaN(maxPrice))
+        }
+        if (!isNaN(maxPrice)) {
           numericFilters.push(`currentPrice <= ${maxPrice}`);
+        }
       }
 
-      // Build facet filters
+      // Build facet filters as an array of arrays for AND conditions
       const facetFilters = [];
-      if (brand) facetFilters.push(`brand:${brand}`);
-      if (status) facetFilters.push(`status:${status}`);
-      if (location) facetFilters.push(`location:${location}`);
-      if (type) facetFilters.push(`type:${type}`);
+      if (brand) facetFilters.push([`brand:${brand}`]);
+      if (status) facetFilters.push([`status:${status}`]);
+      if (location) facetFilters.push([`location:${location}`]);
+      if (type) facetFilters.push([`type:${type}`]);
 
-      // Perform search using searchSingleIndex
-      const searchResponse = await this.algoliaClient.searchSingleIndex({
-        indexName: 'cars_index',
-        searchParams: {
-          query: carModel || '',
-          page,
-          hitsPerPage,
-          facetFilters: facetFilters.length ? facetFilters : undefined,
-          numericFilters: numericFilters.length ? numericFilters : undefined,
-          attributesToRetrieve: [
-            'carModel',
-            'brand',
-            'type',
-            'currentPrice',
-            'status',
-            'location',
-            'maintenanceStatus',
-            'objectID',
-          ],
-          // getRankingInfo: true,
-        },
-      });
+      const searchOptions = {
+        page,
+        hitsPerPage,
+        facetFilters: facetFilters.length ? facetFilters : undefined,
+        numericFilters: numericFilters.length ? numericFilters : undefined,
+        attributesToRetrieve: [
+          'carModel',
+          'brand',
+          'type',
+          'currentPrice',
+          'status',
+          'location',
+          'maintenanceStatus',
+          'objectID',
+        ],
+      };
+
+      const searchResponse = await this.algoliaService.search(
+        this.carIndex,
+        carModel || '',
+        searchOptions,
+      );
 
       // Clean up the hits by removing _highlightResult and _rankingInfo
       const cleanHits = searchResponse.hits.map((hit) => {
-        const { _highlightResult, ...cleanHit } = hit;
+        const { _highlightResult, _rankingInfo, ...cleanHit } = hit;
         return cleanHit;
       });
 
@@ -153,6 +138,7 @@ export class CarServiceService implements OnModuleInit {
         nbPages: searchResponse.nbPages,
       };
     } catch (error) {
+      console.error('Search error:', error);
       throwCustomError('Error performing search', 500);
     }
   }
@@ -161,37 +147,27 @@ export class CarServiceService implements OnModuleInit {
     updateCarDto,
     carId,
   }: UpdateCarStatus): Promise<SuccessMessage> {
-    try {
-      // Update MongoDB
-      const updatedCar = await this.carModel
-        .findByIdAndUpdate(
-          carId,
-          {
-            status: updateCarDto.status,
-          },
-          { new: true },
-        )
-        .exec();
-
-      if (!updatedCar) {
-        throwCustomError('Car not found', 404);
-      }
-
-      // Sync with Algolia
-      await this.algoliaClient.partialUpdateObject({
-        indexName: 'cars_index',
-        objectID: carId,
-        attributesToUpdate: {
+    const updatedCar = await this.carModel
+      .findByIdAndUpdate(
+        carId,
+        {
           status: updateCarDto.status,
         },
-        createIfNotExists: false,
-      });
+        { new: true },
+      )
+      .exec();
 
-      return { message: 'Car updated successfully' };
-    } catch (error) {
-      console.error('Error updating car:', error);
-      throwCustomError('Error updating car status', 500);
+    throw new Error('hello');
+
+    if (!updatedCar) {
+      throwCustomError('Car not found', 404);
     }
+
+    await this.algoliaService.updateObject(this.carIndex, carId, {
+      status: updateCarDto.status,
+    });
+
+    return { message: 'Car updated successfully' };
   }
 
   async getCarData(carId: string): Promise<CarInfo> {
@@ -200,6 +176,44 @@ export class CarServiceService implements OnModuleInit {
       .select('currentPrice carModel')
       .lean()
       .exec();
+
+    if (!dataInfo) {
+      throwCustomError('No Car with info found', 404);
+    }
+
     return dataInfo;
+  }
+  async updateCarStatus(carId: string): Promise<boolean> {
+    const existingCar = await this.carModel.findById(carId).exec();
+
+    if (!existingCar) {
+      throwCustomError('No Car with info found', 404);
+    }
+    if (existingCar.status === Status.RENTED) {
+      throwCustomError(
+        'The requested car is currently rented and cannot be processed.',
+        400,
+      );
+    }
+
+    if (existingCar.status === Status.MAINTENANCE) {
+      throwCustomError(
+        'The requested car is under maintenance and is not available for rental.',
+        503,
+      );
+    }
+    const algoliaResult = await this.algoliaService.updateObject(
+      this.carIndex,
+      carId,
+      { status: Status.RENTED },
+    );
+
+    await existingCar.updateOne({ status: Status.RENTED });
+
+    if (!algoliaResult) {
+      throwCustomError('Failed to update Algolia', 500);
+    }
+
+    return true;
   }
 }

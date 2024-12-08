@@ -44,6 +44,10 @@ export class RpcExceptionFilter implements ExceptionFilter {
       status = exception.status;
       message = exception.message;
       error = exception.error;
+    } else {
+      status = exception.statusCode;
+      message = exception.message;
+      error = exception.error;
     }
 
     response.status(status).json({

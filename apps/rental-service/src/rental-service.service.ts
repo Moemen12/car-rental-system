@@ -14,7 +14,11 @@ import { lastValueFrom } from 'rxjs';
 import { ConfigService } from '@nestjs/config';
 import Stripe from 'stripe';
 import { Payment } from './schemas/payment.schema';
-import { decrypt, throwCustomError } from '@app/common/utilities/general';
+import {
+  calculateDaysDifference,
+  decrypt,
+  throwCustomError,
+} from '@app/common/utilities/general';
 import { confirmationHtml } from './constants';
 
 @Injectable()
@@ -32,7 +36,7 @@ export class RentalServiceService {
   ) {
     this.stripe = new Stripe(this.configService.get('STRIPE_API_KEY'));
   }
-
+  //  onMOd
   async createRental({
     userId,
     carId,
@@ -48,10 +52,11 @@ export class RentalServiceService {
         this.carClient.send({ cmd: 'get-car-data' }, carId),
       );
 
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      const timeDifference = end.getTime() - start.getTime();
-      const numberOfDays = timeDifference / (1000 * 3600 * 24);
+      const numberOfDays = calculateDaysDifference(
+        new Date(startDate),
+        new Date(endDate),
+      );
+
       const totalCost = currentPrice * numberOfDays;
 
       // 2. Create rental record
@@ -153,12 +158,6 @@ export class RentalServiceService {
       .lean()
       .exec();
 
-    const rental = await this.rentalModel
-      .findOne({ _id: payment.rentalId })
-      .populate('carId') // Populates the car details
-      .exec();
-
-    // Validate payment
     if (!payment) {
       throwCustomError('Payment not found', 404);
     }
@@ -168,34 +167,42 @@ export class RentalServiceService {
     }
 
     try {
-      const [stripeConfirmation, updatedPayment] = await Promise.all([
-        this.stripe.paymentIntents.confirm(decryptedPaymentId, {
-          payment_method: 'pm_card_visa',
-        }),
-        this.paymentModel
-          .findOneAndUpdate(
-            {
-              paymentIntentId: decryptedPaymentId,
-              customerId: headerData.userId,
-            },
-            { status: 'confirmed' },
-            { new: true },
-          )
-          .exec(),
-        // this.rentalModel.fin
-      ]);
+      // await this.stripe.paymentIntents.confirm(decryptedPaymentId, {
+      //   payment_method: 'pm_card_visa',
+      // });
+
+      const updatedPayment = await this.paymentModel
+        .findOneAndUpdate(
+          {
+            paymentIntentId: decryptedPaymentId,
+            customerId: headerData.userId,
+          },
+          { status: 'confirmed' },
+          { new: true },
+        )
+        .exec();
 
       if (!updatedPayment) {
         throwCustomError('Failed to update payment status', 500);
       }
 
+      await lastValueFrom(
+        this.carClient.send(
+          { cmd: 'update-car-rental-details' },
+          payment.metadata.carId,
+        ),
+      );
+
+      // update status
       return confirmationHtml;
     } catch (error) {
       if (error.type === 'StripeInvalidRequestError') {
         throwCustomError(`Stripe error: ${error.message}`, 400);
       }
 
-      throwCustomError('An error occurred during payment confirmation.', 500);
+      console.log('takecare', error);
+
+      // throwCustomError('An error occurred during payment confirmation.', 500);
     }
   }
 }

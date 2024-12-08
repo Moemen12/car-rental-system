@@ -30,11 +30,11 @@ export function throwCustomError(message: string, status: number) {
   });
 }
 
-export function RethrowGeneralError(error: Error) {
+export function RethrowGeneralError(message: string) {
   throw new RpcException({
-    message: 'An error occurred',
+    message: message ? message : 'An error occurred',
     statusCode: 500,
-    error: error ? error.message : 'An error occurred',
+    error: 'An error occurred',
   });
 }
 
@@ -168,4 +168,13 @@ export function decrypt(encryptedText: string): string {
   } catch (error) {
     throwCustomError('You are not authorized to perform this action.', 401);
   }
+}
+
+export function calculateDaysDifference(
+  startDate: Date,
+  endDate: Date,
+): number {
+  const timeDifference = endDate.getTime() - startDate.getTime();
+  const numberOfDays = timeDifference / (1000 * 3600 * 24);
+  return numberOfDays;
 }
