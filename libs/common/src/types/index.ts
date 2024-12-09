@@ -64,3 +64,11 @@ export interface PaymentConfirmation {
   headerData: HeaderData;
   paymentId: string;
 }
+
+export interface ErrorResShape {
+  expected: boolean;
+  message: string;
+  status: number;
+  error: string;
+  unexpectedErrorMsg: string;
+}

@@ -183,37 +183,55 @@ export class CarServiceService implements OnModuleInit {
 
     return dataInfo;
   }
-  async updateCarStatus(carId: string): Promise<boolean> {
-    const existingCar = await this.carModel.findById(carId).exec();
+  async updateCarStatus(carId: string): Promise<string> {
+    try {
+      throw new Error('...');
+      const existingCar = await this.carModel.findById(carId).exec();
 
-    if (!existingCar) {
-      throwCustomError('No Car with info found', 404);
-    }
-    if (existingCar.status === Status.RENTED) {
+      if (!existingCar) {
+        throwCustomError('No Car with info found', 404);
+      }
+      if (existingCar.status === Status.RENTED) {
+        throwCustomError(
+          'The requested car is currently rented and cannot be processed.',
+          400,
+        );
+      }
+
+      if (existingCar.status === Status.MAINTENANCE) {
+        throwCustomError(
+          'The requested car is under maintenance and is not available for rental.',
+          503,
+        );
+      }
+      const algoliaResult = await this.algoliaService.updateObject(
+        this.carIndex,
+        carId,
+        { status: Status.RENTED },
+      );
+
+      await existingCar.updateOne({ status: Status.RENTED });
+
+      if (!algoliaResult) {
+        throwCustomError('Failed to update Algolia', 500);
+      }
+
+      return existingCar.id;
+    } catch (error) {
+      // console.log('expected', error.error.expected);
+
+      // if (error?.error?.expected) {
+      //   throwCustomError(error.error.message, error.error.status);
+      // } else {
+      //   throwCustomError('Failed to Confirm Payment Process', 500, false);
+      // }
+
       throwCustomError(
-        'The requested car is currently rented and cannot be processed.',
-        400,
+        error?.error?.message,
+        error?.error?.status,
+        true,
+        'Failed to Confirm Payment Process',
       );
     }
-
-    if (existingCar.status === Status.MAINTENANCE) {
-      throwCustomError(
-        'The requested car is under maintenance and is not available for rental.',
-        503,
-      );
-    }
-    const algoliaResult = await this.algoliaService.updateObject(
-      this.carIndex,
-      carId,
-      { status: Status.RENTED },
-    );
-
-    await existingCar.updateOne({ status: Status.RENTED });
-
-    if (!algoliaResult) {
-      throwCustomError('Failed to update Algolia', 500);
-    }
-
-    return true;
   }
 }

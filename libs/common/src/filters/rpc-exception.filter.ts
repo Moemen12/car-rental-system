@@ -7,9 +7,20 @@ import {
 import { RpcException } from '@nestjs/microservices';
 import chalk from 'chalk';
 import { Response } from 'express';
+import { ErrorResShape } from '../types';
 
 @Catch()
 export class RpcExceptionFilter implements ExceptionFilter {
+  private isErrorResShape(exception: any): exception is ErrorResShape {
+    return (
+      exception &&
+      typeof exception.status === 'number' &&
+      typeof exception.message === 'string' &&
+      typeof exception.expected === 'boolean' &&
+      typeof exception.unexpectedErrorMsg === 'string'
+    );
+  }
+
   catch(exception: any, host: ArgumentsHost) {
     console.log(
       chalk.blueBright('Error has caught in RPC exception filter\n'),
@@ -22,6 +33,7 @@ export class RpcExceptionFilter implements ExceptionFilter {
     let status = 500;
     let message: string | string[] = 'Internal server error';
     let error: string | null = null;
+    let unexpectedErrorMsg;
 
     // Handle RPC Exceptions
     if (exception instanceof RpcException) {
@@ -40,14 +52,17 @@ export class RpcExceptionFilter implements ExceptionFilter {
       error = exception.response.error || 'Validation Error';
     }
     // Handle direct HTTP exceptions
-    else if (exception?.status && exception?.message) {
+    else if (this.isErrorResShape(exception)) {
+      console.log('here', exception);
+
       status = exception.status;
       message = exception.message;
       error = exception.error;
+      unexpectedErrorMsg = exception.unexpectedErrorMsg;
     } else {
-      status = exception.statusCode;
-      message = exception.message;
-      error = exception.error;
+      status = exception.statusCode || 500;
+      message = exception.message || 'Internal server error';
+      error = exception.error || null;
     }
 
     response.status(status).json({

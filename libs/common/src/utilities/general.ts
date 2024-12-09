@@ -22,8 +22,15 @@ export async function saltAndHashPassword(password: string): Promise<string> {
   }
 }
 
-export function throwCustomError(message: string, status: number) {
+export function throwCustomError(
+  message: string,
+  status: number,
+  expected?: boolean,
+  unexpectedErrorMsg?: string,
+) {
   throw new RpcException({
+    expected: expected ?? true,
+    unexpectedErrorMsg,
     message,
     status,
     error: message,
@@ -62,14 +69,11 @@ export async function validateDriverLicense(
     });
 
     const extractedText = result.data.text;
-    console.log('Extracted text:', extractedText);
 
     const cleanedText = cleanText(extractedText);
-    console.log('Cleaned text:', cleanedText);
 
     return isValidLicense(cleanedText);
   } catch (error) {
-    console.error('License validation error:', error);
     return false;
   }
 }

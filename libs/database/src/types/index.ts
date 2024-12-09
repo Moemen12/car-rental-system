@@ -21,8 +21,8 @@ export enum MaintenanceStatus {
   NEEDS_MAINTENANCE = 'needs_maintenance',
 }
 
-export enum RentalStatus {
-  ACTIVE = 'active',
-  COMPLETED = 'completed',
-  CANCELLED = 'cancelled',
-}
+// export enum RentalStatus {
+//   ACTIVE = 'active',
+//   COMPLETED = 'completed',
+//   CANCELLED = 'cancelled',
+// }

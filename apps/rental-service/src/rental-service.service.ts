@@ -20,6 +20,7 @@ import {
   throwCustomError,
 } from '@app/common/utilities/general';
 import { confirmationHtml } from './constants';
+import { Status } from '@app/database/types';
 
 @Injectable()
 export class RentalServiceService {
@@ -115,8 +116,6 @@ export class RentalServiceService {
 
       const rentalId = rental._id.toString();
 
-      console.log(rentalId);
-
       const data: UpdateUserRentals = {
         userId,
         rentalId,
@@ -177,7 +176,7 @@ export class RentalServiceService {
             paymentIntentId: decryptedPaymentId,
             customerId: headerData.userId,
           },
-          { status: 'confirmed' },
+          { status: '' }, //confirmed
           { new: true },
         )
         .exec();
@@ -186,12 +185,17 @@ export class RentalServiceService {
         throwCustomError('Failed to update payment status', 500);
       }
 
-      await lastValueFrom(
+      const carId: string = await lastValueFrom(
         this.carClient.send(
           { cmd: 'update-car-rental-details' },
           payment.metadata.carId,
         ),
       );
+
+      await this.rentalModel.findOneAndUpdate({
+        carId: carId,
+        status: Status.RENTED,
+      });
 
       // update status
       return confirmationHtml;
@@ -200,7 +204,14 @@ export class RentalServiceService {
         throwCustomError(`Stripe error: ${error.message}`, 400);
       }
 
-      console.log('takecare', error);
+      // console.log('updated', error.expected);
+
+      throwCustomError(
+        error.message,
+        error.status,
+        error.expected,
+        error.unexpectedErrorMsg,
+      );
 
       // throwCustomError('An error occurred during payment confirmation.', 500);
     }

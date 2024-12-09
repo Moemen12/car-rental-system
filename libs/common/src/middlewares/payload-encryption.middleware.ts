@@ -12,8 +12,6 @@ export class PayloadEncryptionMiddleware implements NestMiddleware {
   ) {}
 
   async use(req: Request, res: Response, next: NextFunction) {
-    console.log('middleware triggered');
-
     // Handle response encryption
     const originalJson = res.json;
     res.json = (body: any) => {
