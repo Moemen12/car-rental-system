@@ -2,13 +2,15 @@ import {
   CarInfo,
   EmailConfirmationData,
   HeaderData,
+  RentalInvoiceData,
   RentCar,
+  UpdatedCar,
   UpdateUserRentals,
 } from '@app/common';
-import { Inject, Injectable, BadRequestException } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Rental } from './schemas/rental.schema';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import { ClientProxy } from '@nestjs/microservices';
 import { lastValueFrom } from 'rxjs';
 import { ConfigService } from '@nestjs/config';
@@ -19,7 +21,7 @@ import {
   decrypt,
   throwCustomError,
 } from '@app/common/utilities/general';
-import { confirmationHtml } from './constants';
+import { confirmationHtml, formattedDate } from './constants';
 import { Status } from '@app/database/types';
 
 @Injectable()
@@ -33,6 +35,7 @@ export class RentalServiceService {
     @Inject('RENTAL_EMAIL_SERVICE')
     private readonly rentEmailCLient: ClientProxy,
     @Inject('USER_SERVICE') private readonly userClient: ClientProxy,
+    @Inject('USER_EMAIL_SERVICE') private readonly rabbitClient: ClientProxy,
     private readonly configService: ConfigService,
   ) {
     this.stripe = new Stripe(this.configService.get('STRIPE_API_KEY'));
@@ -120,6 +123,7 @@ export class RentalServiceService {
         userId,
         rentalId,
       };
+
       await lastValueFrom(
         this.userClient.send({ cmd: 'adding-rented-car' }, data),
       );
@@ -142,6 +146,13 @@ export class RentalServiceService {
       console.log(error);
 
       throwCustomError(error.message || 'Failed to create rental', 400);
+
+      // throwCustomError(
+      //   error.message,
+      //   error.status,
+      //   error.expected,
+      //   'An error occurred during renting payment.',
+      // );
     }
   }
 
@@ -185,17 +196,43 @@ export class RentalServiceService {
         throwCustomError('Failed to update payment status', 500);
       }
 
-      const carId: string = await lastValueFrom(
+      const { carId, carModel }: UpdatedCar = await lastValueFrom(
         this.carClient.send(
           { cmd: 'update-car-rental-details' },
           payment.metadata.carId,
         ),
       );
 
-      await this.rentalModel.findOneAndUpdate({
-        carId: carId,
-        status: Status.RENTED,
-      });
+      await this.rentalModel.findOneAndUpdate(
+        {
+          carId: carId,
+          userId: headerData.userId,
+        },
+        {
+          status: Status.RENTED,
+        },
+      );
+
+      const invoiceData: RentalInvoiceData = {
+        to: headerData.email,
+        customerName: headerData.fullName,
+        carModel: carModel,
+        startDate: payment.metadata.startDate,
+        endDate: payment.metadata.endDate,
+        duration: `${calculateDaysDifference(
+          new Date(payment.metadata.startDate),
+          new Date(payment.metadata.endDate),
+        )} days`,
+
+        rentalCost: String(payment.amount),
+        totalCost: String(payment.amount),
+        currency: payment.currency.toUpperCase(),
+        invoiceNumber: payment._id.toString(),
+        paymentId: paymentId,
+        currentDate: formattedDate,
+      };
+
+      this.rabbitClient.emit({ cmd: 'send-invoice-email' }, invoiceData);
 
       // update status
       return confirmationHtml;
@@ -204,16 +241,12 @@ export class RentalServiceService {
         throwCustomError(`Stripe error: ${error.message}`, 400);
       }
 
-      // console.log('updated', error.expected);
-
       throwCustomError(
         error.message,
         error.status,
         error.expected,
-        error.unexpectedErrorMsg,
+        'An error occurred during payment confirmation.',
       );
-
-      // throwCustomError('An error occurred during payment confirmation.', 500);
     }
   }
 }

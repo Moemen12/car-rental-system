@@ -170,7 +170,11 @@ export function decrypt(encryptedText: string): string {
       decipher.update(encryptedText, 'base64', 'utf8') + decipher.final('utf8')
     );
   } catch (error) {
-    throwCustomError('You are not authorized to perform this action.', 401);
+    throwCustomError(
+      'You are not authorized to perform this action.',
+      401,
+      true,
+    );
   }
 }
 

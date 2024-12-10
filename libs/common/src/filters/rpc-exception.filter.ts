@@ -3,6 +3,7 @@ import {
   ArgumentsHost,
   ExceptionFilter,
   HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import chalk from 'chalk';
@@ -14,8 +15,8 @@ export class RpcExceptionFilter implements ExceptionFilter {
   private isErrorResShape(exception: any): exception is ErrorResShape {
     return (
       exception &&
-      typeof exception.status === 'number' &&
-      typeof exception.message === 'string' &&
+      // typeof exception.status === 'number' &&
+      // typeof exception.message === 'string' &&
       typeof exception.expected === 'boolean' &&
       typeof exception.unexpectedErrorMsg === 'string'
     );
@@ -30,15 +31,17 @@ export class RpcExceptionFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
 
-    let status = 500;
+    let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let message: string | string[] = 'Internal server error';
     let error: string | null = null;
-    let unexpectedErrorMsg;
 
     // Handle RPC Exceptions
     if (exception instanceof RpcException) {
       const rpcError = exception.getError() as any;
-      status = rpcError.status || rpcError.statusCode || 500;
+      status =
+        rpcError.status ||
+        rpcError.statusCode ||
+        HttpStatus.INTERNAL_SERVER_ERROR;
       message = rpcError.message || 'Internal server error';
       error = rpcError.error;
     }
@@ -47,20 +50,17 @@ export class RpcExceptionFilter implements ExceptionFilter {
       exception?.response?.message &&
       Array.isArray(exception.response.message)
     ) {
-      status = exception.status || 400;
+      status = exception.status || HttpStatus.BAD_REQUEST;
       message = exception.response.message[0];
       error = exception.response.error || 'Validation Error';
     }
     // Handle direct HTTP exceptions
     else if (this.isErrorResShape(exception)) {
-      console.log('here', exception);
-
-      status = exception.status;
-      message = exception.message;
-      error = exception.error;
-      unexpectedErrorMsg = exception.unexpectedErrorMsg;
+      status = exception.status || HttpStatus.INTERNAL_SERVER_ERROR;
+      message = exception.message || exception.unexpectedErrorMsg;
+      error = exception.error || exception.unexpectedErrorMsg;
     } else {
-      status = exception.statusCode || 500;
+      status = exception.status || HttpStatus.INTERNAL_SERVER_ERROR;
       message = exception.message || 'Internal server error';
       error = exception.error || null;
     }

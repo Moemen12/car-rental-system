@@ -4,7 +4,12 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Car } from '../schemas/car.schema';
 import { Model } from 'mongoose';
 import { throwCustomError } from '@app/common/utilities/general';
-import { CarInfo, SuccessMessage, UpdateCarStatus } from '@app/common';
+import {
+  CarInfo,
+  SuccessMessage,
+  UpdateCarStatus,
+  UpdatedCar,
+} from '@app/common';
 import { CarSearchDto } from '@app/common/dtos/search-car.dto';
 import { AlgoliaService } from '@app/common/services';
 import { Status } from '@app/database/types';
@@ -15,8 +20,6 @@ export class CarServiceService implements OnModuleInit {
     @InjectModel(Car.name) private readonly carModel: Model<Car>,
     private readonly algoliaService: AlgoliaService,
   ) {}
-
-  private readonly carIndex = 'cars_index';
 
   async onModuleInit() {
     await this.algoliaService.initIndex(this.carIndex, {
@@ -29,6 +32,30 @@ export class CarServiceService implements OnModuleInit {
         'numericFilters(currentPrice)',
       ],
     });
+  }
+
+  private readonly carIndex = 'cars_index';
+
+  private checkCarStatus(status: Status): void {
+    const unavailableStatusMessages: Partial<
+      Record<Status, { message: string; code: number }>
+    > = {
+      [Status.RENTED]: {
+        message:
+          'The requested car is currently rented and cannot be processed.',
+        code: 400,
+      },
+      [Status.MAINTENANCE]: {
+        message:
+          'The requested car is under maintenance and is not available for rental.',
+        code: 503,
+      },
+    };
+
+    if (status in unavailableStatusMessages) {
+      const { message, code } = unavailableStatusMessages[status]!;
+      throwCustomError(message, code);
+    }
   }
 
   private validatePricing(basePrice: number, currentPrice: number): void {
@@ -157,8 +184,6 @@ export class CarServiceService implements OnModuleInit {
       )
       .exec();
 
-    throw new Error('hello');
-
     if (!updatedCar) {
       throwCustomError('Car not found', 404);
     }
@@ -173,7 +198,7 @@ export class CarServiceService implements OnModuleInit {
   async getCarData(carId: string): Promise<CarInfo> {
     const dataInfo = await this.carModel
       .findById(carId)
-      .select('currentPrice carModel')
+      .select('currentPrice carModel status')
       .lean()
       .exec();
 
@@ -181,11 +206,14 @@ export class CarServiceService implements OnModuleInit {
       throwCustomError('No Car with info found', 404);
     }
 
+    console.log(dataInfo.status);
+
+    this.checkCarStatus(dataInfo.status);
+
     return dataInfo;
   }
-  async updateCarStatus(carId: string): Promise<string> {
+  async updateCarStatus(carId: string): Promise<UpdatedCar> {
     try {
-      throw new Error('...');
       const existingCar = await this.carModel.findById(carId).exec();
 
       if (!existingCar) {
@@ -216,16 +244,11 @@ export class CarServiceService implements OnModuleInit {
         throwCustomError('Failed to update Algolia', 500);
       }
 
-      return existingCar.id;
+      return {
+        carId: existingCar.id,
+        carModel: existingCar.carModel,
+      };
     } catch (error) {
-      // console.log('expected', error.error.expected);
-
-      // if (error?.error?.expected) {
-      //   throwCustomError(error.error.message, error.error.status);
-      // } else {
-      //   throwCustomError('Failed to Confirm Payment Process', 500, false);
-      // }
-
       throwCustomError(
         error?.error?.message,
         error?.error?.status,

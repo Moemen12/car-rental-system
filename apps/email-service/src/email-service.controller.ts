@@ -4,6 +4,7 @@ import { EventPattern, MessagePattern } from '@nestjs/microservices';
 import {
   EmailConfirmationData,
   EmailRegistrationData,
+  RentalInvoiceData,
 } from '@app/common/types';
 import { EmailServiceService } from './email-service.service';
 
@@ -26,5 +27,10 @@ export class EmailServiceController {
     return await this.emailServiceService.sendPaymentConfirmation(
       emailConfirmationData,
     );
+  }
+
+  @EventPattern({ cmd: 'send-invoice-email' })
+  async sendInvoicePdf(invoiceData: RentalInvoiceData) {
+    return await this.emailServiceService.sendRentalInvoiceWithPdf(invoiceData);
   }
 }

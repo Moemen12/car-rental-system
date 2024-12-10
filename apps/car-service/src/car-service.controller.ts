@@ -2,7 +2,12 @@ import { Controller, Get, Inject } from '@nestjs/common';
 import { CarServiceService } from './car-service.service';
 import { MessagePattern } from '@nestjs/microservices';
 import { CreateCarDto } from '@app/common/dtos/create-car.dto';
-import { CarInfo, SuccessMessage, UpdateCarStatus } from '@app/common';
+import {
+  CarInfo,
+  SuccessMessage,
+  UpdateCarStatus,
+  UpdatedCar,
+} from '@app/common';
 import { CarSearchDto } from '@app/common/dtos/search-car.dto';
 import { Cacheable } from 'cacheable';
 import { ConfigService } from '@nestjs/config';
@@ -38,7 +43,7 @@ export class CarServiceController {
   }
 
   @MessagePattern({ cmd: 'update-car-rental-details' })
-  async updateCarStatus(carId: string): Promise<string> {
+  async updateCarStatus(carId: string): Promise<UpdatedCar> {
     return await this.carServiceService.updateCarStatus(carId);
   }
 }

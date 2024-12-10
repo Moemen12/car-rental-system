@@ -59,6 +59,10 @@ export interface UpdateUserRentals {
   userId: string;
   rentalId: string;
 }
+export interface UpdatedCar {
+  carId: string;
+  carModel: string;
+}
 
 export interface PaymentConfirmation {
   headerData: HeaderData;
@@ -71,4 +75,19 @@ export interface ErrorResShape {
   status: number;
   error: string;
   unexpectedErrorMsg: string;
+}
+
+export interface RentalInvoiceData {
+  to: string;
+  customerName: string;
+  carModel: string;
+  startDate: string;
+  endDate: string;
+  duration: string;
+  rentalCost: string;
+  totalCost: string;
+  currency: string;
+  invoiceNumber: string;
+  paymentId: string;
+  currentDate: string;
 }

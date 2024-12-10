@@ -7,7 +7,7 @@ import { Rental, RentalSchema } from './schemas/rental.schema';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ConfigService } from '@nestjs/config';
 import { Payment, PaymentSchema } from './schemas/payment.schema';
-import { seconds } from '@nestjs/throttler';
+import { days, seconds } from '@nestjs/throttler';
 
 @Module({
   imports: [
@@ -59,6 +59,25 @@ import { seconds } from '@nestjs/throttler';
               arguments: {
                 'x-message-ttl': seconds(
                   configService.get('RENTAL_EMAIL_QUEUE_TTL'),
+                ),
+              },
+            },
+          },
+        }),
+      },
+      {
+        name: 'USER_EMAIL_SERVICE',
+        inject: [ConfigService],
+        useFactory: (configService: ConfigService) => ({
+          transport: Transport.RMQ,
+          options: {
+            urls: [configService.get<string>('RABBITMQ_URL')],
+            queue: configService.get('USER_EMAIL_QUEUE_NAME'),
+            queueOptions: {
+              durable: true,
+              arguments: {
+                'x-message-ttl': days(
+                  configService.get('USER_EMAIL_QUEUE_TTL'),
                 ),
               },
             },
