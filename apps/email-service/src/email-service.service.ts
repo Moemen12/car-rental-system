@@ -5,8 +5,12 @@ import * as nodemailer from 'nodemailer';
 import * as puppeteer from 'puppeteer';
 import Mail from 'nodemailer/lib/mailer';
 import { ConfigService } from '@nestjs/config';
-import { EmailConfirmationData, RentalInvoiceData } from '@app/common';
-import { encrypt } from '@app/common/utilities/general';
+import {
+  EmailConfirmationData,
+  RentalInvoiceData,
+  SuccessMessage,
+} from '@app/common';
+import { encrypt, throwCustomError } from '@app/common/utilities/general';
 
 @Injectable()
 export class EmailServiceService {
@@ -132,9 +136,7 @@ export class EmailServiceService {
     invoiceNumber,
     paymentId,
     currentDate,
-  }: RentalInvoiceData): Promise<void> {
-    console.log(to);
-
+  }: RentalInvoiceData): Promise<SuccessMessage> {
     const htmlContent = this.rentalInvoiceTemplate
       .replace('{{customerName}}', customerName)
       .replace('{{carModel}}', carModel)
@@ -166,9 +168,14 @@ export class EmailServiceService {
 
     try {
       await this.transporter.sendMail(mailOptions);
-      console.log('Rental invoice email sent with PDF attachment');
+      return { message: 'Rental invoice email sent with PDF attachment' };
     } catch (error) {
-      console.error('Error sending rental invoice with PDF attachment:', error);
+      // throwCustomError(
+      //   error.message,
+      //   500,
+      //   true,
+      //   'Error sending rental invoice with PDF attachment:',
+      // );
     }
   }
 }

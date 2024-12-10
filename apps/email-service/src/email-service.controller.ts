@@ -5,6 +5,7 @@ import {
   EmailConfirmationData,
   EmailRegistrationData,
   RentalInvoiceData,
+  SuccessMessage,
 } from '@app/common/types';
 import { EmailServiceService } from './email-service.service';
 
@@ -29,8 +30,10 @@ export class EmailServiceController {
     );
   }
 
-  @EventPattern({ cmd: 'send-invoice-email' })
-  async sendInvoicePdf(invoiceData: RentalInvoiceData) {
+  @MessagePattern({ cmd: 'send-invoice-email' })
+  async sendInvoicePdf(
+    invoiceData: RentalInvoiceData,
+  ): Promise<SuccessMessage> {
     return await this.emailServiceService.sendRentalInvoiceWithPdf(invoiceData);
   }
 }

@@ -232,7 +232,9 @@ export class RentalServiceService {
         currentDate: formattedDate,
       };
 
-      this.rabbitClient.emit({ cmd: 'send-invoice-email' }, invoiceData);
+      await lastValueFrom(
+        this.rabbitClient.send({ cmd: 'send-invoice-email' }, invoiceData),
+      );
 
       // update status
       return confirmationHtml;
