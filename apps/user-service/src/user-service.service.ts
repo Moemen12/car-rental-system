@@ -9,6 +9,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { isValidObjectId, Model } from 'mongoose';
 import {
+  logError,
   RethrowGeneralError,
   saltAndHashPassword,
   throwCustomError,
@@ -89,22 +90,25 @@ export class UserServiceService {
     email,
     password,
   }: Omit<CreateUserDto, 'fullName'>): Promise<AuthAccessType> {
-    const existingUser = await this.userModel.findOne({ email }).lean().exec();
-
-    if (!existingUser) {
-      throwCustomError('No account associated with this email address.', 404);
-    }
-
-    const passwordMatched = await bcrypt.compare(
-      password,
-      existingUser.password,
-    );
-
-    if (!passwordMatched) {
-      throwCustomError('Incorrect Credentials', 401);
-    }
-
     try {
+      const existingUser = await this.userModel
+        .findOne({ email })
+        .lean()
+        .exec();
+
+      if (!existingUser) {
+        throwCustomError('No account associated with this email address.', 404);
+      }
+
+      const passwordMatched = await bcrypt.compare(
+        password,
+        existingUser.password,
+      );
+
+      if (!passwordMatched) {
+        throwCustomError('Incorrect Credentials', 401);
+      }
+
       const payload = {
         userId: existingUser._id.toString(),
         email: existingUser.email,
@@ -117,7 +121,12 @@ export class UserServiceService {
         access_token,
       };
     } catch (error) {
-      RethrowGeneralError(error);
+      logError(error);
+      throwCustomError(
+        error?.error?.message,
+        error?.error?.status,
+        'An error occurred during payment confirmation.',
+      );
     }
   }
 

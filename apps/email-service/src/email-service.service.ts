@@ -11,6 +11,7 @@ import {
   SuccessMessage,
 } from '@app/common';
 import { encrypt, throwCustomError } from '@app/common/utilities/general';
+import { rentalInvoiceEmailBody } from './constants';
 
 @Injectable()
 export class EmailServiceService {
@@ -150,14 +151,13 @@ export class EmailServiceService {
       .replace('{{paymentId}}', paymentId)
       .replace('{{currentDate}}', currentDate);
 
-    // Generate PDF from HTML using Puppeteer
     const pdfBuffer = await this.generatePdfFromHtml(htmlContent);
 
     const mailOptions: nodemailer.SendMailOptions = {
       from: this.configService.get<string>('EMAIL_USER'),
       to: to,
       subject: '🚗 Your Car Rental Invoice',
-      text: 'Your rental invoice is attached as a PDF.',
+      text: rentalInvoiceEmailBody,
       attachments: [
         {
           filename: 'rental-invoice.pdf',
@@ -170,12 +170,12 @@ export class EmailServiceService {
       await this.transporter.sendMail(mailOptions);
       return { message: 'Rental invoice email sent with PDF attachment' };
     } catch (error) {
-      // throwCustomError(
-      //   error.message,
-      //   500,
-      //   true,
-      //   'Error sending rental invoice with PDF attachment:',
-      // );
+      throwCustomError(
+        error.message,
+        500,
+        true,
+        'Error sending rental invoice with PDF attachment:',
+      );
     }
   }
 }

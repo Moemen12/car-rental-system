@@ -157,29 +157,27 @@ export class RentalServiceService {
   }
 
   async confirmRenting(paymentId: string, headerData: HeaderData) {
-    const decryptedPaymentId = decrypt(paymentId);
-
-    // Fetch payment from database
-    const payment = await this.paymentModel
-      .findOne({
-        paymentIntentId: decryptedPaymentId,
-        customerId: headerData.userId,
-      })
-      .lean()
-      .exec();
-
-    if (!payment) {
-      throwCustomError('Payment not found', 404);
-    }
-
-    if (payment.status === 'confirmed') {
-      throwCustomError('Payment has already been confirmed.', 409);
-    }
-
     try {
-      // await this.stripe.paymentIntents.confirm(decryptedPaymentId, {
-      //   payment_method: 'pm_card_visa',
-      // });
+      const decryptedPaymentId = decrypt(paymentId);
+      const payment = await this.paymentModel
+        .findOne({
+          paymentIntentId: decryptedPaymentId,
+          customerId: headerData.userId,
+        })
+        .lean()
+        .exec();
+
+      if (!payment) {
+        throwCustomError('Payment not found', 404);
+      }
+
+      if (payment.status === 'confirmed') {
+        throwCustomError('Payment has already been confirmed.', 409);
+      }
+
+      await this.stripe.paymentIntents.confirm(decryptedPaymentId, {
+        payment_method: 'pm_card_visa',
+      });
 
       const updatedPayment = await this.paymentModel
         .findOneAndUpdate(
@@ -187,7 +185,7 @@ export class RentalServiceService {
             paymentIntentId: decryptedPaymentId,
             customerId: headerData.userId,
           },
-          { status: '' }, //confirmed
+          { status: 'confirmed' },
           { new: true },
         )
         .exec();
@@ -236,7 +234,6 @@ export class RentalServiceService {
         this.rabbitClient.send({ cmd: 'send-invoice-email' }, invoiceData),
       );
 
-      // update status
       return confirmationHtml;
     } catch (error) {
       if (error.type === 'StripeInvalidRequestError') {

@@ -5,6 +5,7 @@ import { MemoryStoredFile } from 'nestjs-form-data';
 import Tesseract from 'tesseract.js';
 import sharp from 'sharp';
 import * as crypto from 'crypto';
+import chalk from 'chalk';
 
 const ENCRYPTION_KEY = Buffer.from(
   'f3f4b9d9ac56c5e3a4e5b0cdb173a1f8',
@@ -25,11 +26,10 @@ export async function saltAndHashPassword(password: string): Promise<string> {
 export function throwCustomError(
   message: string,
   status: number,
-  expected?: boolean,
   unexpectedErrorMsg?: string,
 ) {
   throw new RpcException({
-    expected: expected ?? true,
+    expected: true,
     unexpectedErrorMsg,
     message,
     status,
@@ -37,6 +37,15 @@ export function throwCustomError(
   });
 }
 
+export function logError(error: any) {
+  if (process.env.DEBUG_MODE === 'true') {
+    if (!error?.error?.expected) {
+      console.log(chalk.red('Unexpected Error:'), chalk.yellow(error));
+    } else {
+      console.log(chalk.green('No unexpected error occurred.'));
+    }
+  }
+}
 export function RethrowGeneralError(message: string) {
   throw new RpcException({
     message: message ? message : 'An error occurred',
@@ -173,7 +182,7 @@ export function decrypt(encryptedText: string): string {
     throwCustomError(
       'You are not authorized to perform this action.',
       401,
-      true,
+      'An error occurred during decrypting text',
     );
   }
 }
