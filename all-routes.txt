@@ -1,6 +1,7 @@
 /api/auth/login      post
 /api/auth/register   post
 /api/users/:id/profile  get
+/api/users/:id/profile  patch
 /api/users/:id  delete
 /api/cars  post
 /api/cars/search get

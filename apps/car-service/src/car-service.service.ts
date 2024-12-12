@@ -3,7 +3,7 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Car } from '../schemas/car.schema';
 import { Model } from 'mongoose';
-import { throwCustomError } from '@app/common/utilities/general';
+import { logError, throwCustomError } from '@app/common/utilities/general';
 import {
   CarInfo,
   SuccessMessage,
@@ -71,11 +71,10 @@ export class CarServiceService implements OnModuleInit {
   }
 
   async addCar(createCarDto: CreateCarDto): Promise<SuccessMessage> {
-    const { basePrice, currentPrice } = createCarDto;
-
-    this.validatePricing(basePrice, currentPrice);
-
     try {
+      const { basePrice, currentPrice } = createCarDto;
+
+      this.validatePricing(basePrice, currentPrice);
       const createdCar = await this.carModel.create(createCarDto);
 
       if (createdCar) {
@@ -94,7 +93,12 @@ export class CarServiceService implements OnModuleInit {
         return { message: 'Car added successfully' };
       }
     } catch (error) {
-      throwCustomError(error, 500);
+      logError(error);
+      throwCustomError(
+        error?.error?.message,
+        error?.error?.status,
+        'Failed to Add new Car',
+      );
     }
   }
 
@@ -165,8 +169,12 @@ export class CarServiceService implements OnModuleInit {
         nbPages: searchResponse.nbPages,
       };
     } catch (error) {
-      console.error('Search error:', error);
-      throwCustomError('Error performing search', 500);
+      logError(error);
+      throwCustomError(
+        error?.error?.message,
+        error?.error?.status,
+        'Error performing search',
+      );
     }
   }
 
@@ -174,43 +182,60 @@ export class CarServiceService implements OnModuleInit {
     updateCarDto,
     carId,
   }: UpdateCarStatus): Promise<SuccessMessage> {
-    const updatedCar = await this.carModel
-      .findByIdAndUpdate(
-        carId,
-        {
-          status: updateCarDto.status,
-        },
-        { new: true },
-      )
-      .exec();
+    try {
+      const updatedCar = await this.carModel
+        .findByIdAndUpdate(
+          carId,
+          {
+            status: updateCarDto.status,
+          },
+          { new: true },
+        )
+        .exec();
 
-    if (!updatedCar) {
-      throwCustomError('Car not found', 404);
+      if (!updatedCar) {
+        throwCustomError('Car not found', 404);
+      }
+
+      await this.algoliaService.updateObject(this.carIndex, carId, {
+        status: updateCarDto.status,
+      });
+
+      return { message: 'Car updated successfully' };
+    } catch (error) {
+      logError(error);
+
+      throwCustomError(
+        error?.error?.message,
+        error?.error?.status,
+        'Failed to Update Car Availability',
+      );
     }
-
-    await this.algoliaService.updateObject(this.carIndex, carId, {
-      status: updateCarDto.status,
-    });
-
-    return { message: 'Car updated successfully' };
   }
 
   async getCarData(carId: string): Promise<CarInfo> {
-    const dataInfo = await this.carModel
-      .findById(carId)
-      .select('currentPrice carModel status')
-      .lean()
-      .exec();
+    try {
+      const dataInfo = await this.carModel
+        .findById(carId)
+        .select('currentPrice carModel status')
+        .lean()
+        .exec();
 
-    if (!dataInfo) {
-      throwCustomError('No Car with info found', 404);
+      if (!dataInfo) {
+        throwCustomError('No Car with info found', 404);
+      }
+      this.checkCarStatus(dataInfo.status);
+
+      return dataInfo;
+    } catch (error) {
+      logError(error);
+
+      throwCustomError(
+        error?.error?.message,
+        error?.error?.status,
+        'Failed to Update get Car Info',
+      );
     }
-
-    console.log(dataInfo.status);
-
-    this.checkCarStatus(dataInfo.status);
-
-    return dataInfo;
   }
   async updateCarStatus(carId: string): Promise<UpdatedCar> {
     try {
@@ -249,10 +274,10 @@ export class CarServiceService implements OnModuleInit {
         carModel: existingCar.carModel,
       };
     } catch (error) {
+      logError(error);
       throwCustomError(
         error?.error?.message,
         error?.error?.status,
-        true,
         'Failed to Confirm Payment Process',
       );
     }

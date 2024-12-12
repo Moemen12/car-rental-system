@@ -10,7 +10,11 @@ import {
   RentalInvoiceData,
   SuccessMessage,
 } from '@app/common';
-import { encrypt, throwCustomError } from '@app/common/utilities/general';
+import {
+  encrypt,
+  logError,
+  throwCustomError,
+} from '@app/common/utilities/general';
 import { rentalInvoiceEmailBody } from './constants';
 
 @Injectable()
@@ -170,10 +174,10 @@ export class EmailServiceService {
       await this.transporter.sendMail(mailOptions);
       return { message: 'Rental invoice email sent with PDF attachment' };
     } catch (error) {
+      logError(error);
       throwCustomError(
-        error.message,
-        500,
-        true,
+        error?.error?.message,
+        error?.error?.status,
         'Error sending rental invoice with PDF attachment:',
       );
     }

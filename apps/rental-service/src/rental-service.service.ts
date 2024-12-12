@@ -19,6 +19,7 @@ import { Payment } from './schemas/payment.schema';
 import {
   calculateDaysDifference,
   decrypt,
+  logError,
   throwCustomError,
 } from '@app/common/utilities/general';
 import { confirmationHtml, formattedDate } from './constants';
@@ -51,7 +52,13 @@ export class RentalServiceService {
   }: RentCar) {
     const CURRENCY = 'usd';
     try {
-      // 1. Get car data and calculate cost
+      const isDriverLicenseValid: boolean = await lastValueFrom(
+        this.userClient.send({ cmd: 'is-driver-exist' }, userId),
+      );
+
+      if (isDriverLicenseValid) {
+        throwCustomError('Driver license information is incomplete', 400);
+      }
       const { currentPrice, carModel }: CarInfo = await lastValueFrom(
         this.carClient.send({ cmd: 'get-car-data' }, carId),
       );
@@ -63,7 +70,6 @@ export class RentalServiceService {
 
       const totalCost = currentPrice * numberOfDays;
 
-      // 2. Create rental record
       const rental = await this.rentalModel.create({
         userId,
         carId,
@@ -73,7 +79,6 @@ export class RentalServiceService {
         status: 'pending',
       });
 
-      // 3. Create a PaymentIntent
       const paymentIntent = await this.stripe.paymentIntents.create({
         amount: Math.round(totalCost * 100), // Convert to cents
         currency: CURRENCY,
@@ -143,16 +148,13 @@ export class RentalServiceService {
         anything: 'anything',
       };
     } catch (error) {
-      console.log(error);
+      logError(error);
 
-      throwCustomError(error.message || 'Failed to create rental', 400);
-
-      // throwCustomError(
-      //   error.message,
-      //   error.status,
-      //   error.expected,
-      //   'An error occurred during renting payment.',
-      // );
+      throwCustomError(
+        error?.error?.message,
+        error?.error?.status,
+        'Failed to rent a Car',
+      );
     }
   }
 
@@ -236,14 +238,14 @@ export class RentalServiceService {
 
       return confirmationHtml;
     } catch (error) {
+      logError(error);
       if (error.type === 'StripeInvalidRequestError') {
         throwCustomError(`Stripe error: ${error.message}`, 400);
       }
 
       throwCustomError(
-        error.message,
-        error.status,
-        error.expected,
+        error?.error?.message,
+        error?.error?.status,
         'An error occurred during payment confirmation.',
       );
     }

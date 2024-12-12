@@ -41,4 +41,24 @@ export class UserServiceController {
   async addingRentedCar(data: UpdateUserRentals) {
     return await this.userServiceService.addingRentedCar(data);
   }
+
+  @MessagePattern({ cmd: 'update-user-profile' })
+  async updateUserProfile(
+    serializedData: any,
+  ): Promise<{ driverLicenseImageUrl: string; fullName: string }> {
+    const dataWithBuffer = {
+      ...serializedData,
+      driverLicense: {
+        ...serializedData.driverLicense,
+        buffer: Buffer.from(serializedData.driverLicense.buffer, 'base64'),
+      },
+    };
+
+    return await this.userServiceService.updateUserProfile(dataWithBuffer);
+  }
+
+  @MessagePattern({ cmd: 'is-driver-exist' })
+  async isDriverLicenseValid(userId: string): Promise<boolean> {
+    return await this.userServiceService.isDriverLicenseValid(userId);
+  }
 }

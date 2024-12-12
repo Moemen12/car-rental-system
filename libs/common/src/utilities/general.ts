@@ -6,6 +6,7 @@ import Tesseract from 'tesseract.js';
 import sharp from 'sharp';
 import * as crypto from 'crypto';
 import chalk from 'chalk';
+import stringSimilarity from 'string-similarity';
 
 const ENCRYPTION_KEY = Buffer.from(
   'f3f4b9d9ac56c5e3a4e5b0cdb173a1f8',
@@ -61,6 +62,7 @@ export function convertMbToBytes(mb: number): number {
 
 export async function validateDriverLicense(
   image: MemoryStoredFile,
+  driverLicenseId: string,
 ): Promise<boolean> {
   try {
     // More robust image preprocessing
@@ -79,29 +81,44 @@ export async function validateDriverLicense(
 
     const extractedText = result.data.text;
 
+    // Clean the extracted text
     const cleanedText = cleanText(extractedText);
 
-    return isValidLicense(cleanedText);
+    // Validate extracted text against driverLicenseId with similarity check
+    const isIdSimilar = checkIdSimilarity(driverLicenseId, cleanedText);
+
+    // Validate license format and content
+    const isLicenseValid = isValidLicense(cleanedText);
+
+    return isIdSimilar && isLicenseValid;
   } catch (error) {
     return false;
   }
 }
 
+function checkIdSimilarity(driverLicenseId: string, text: string): boolean {
+  // Extract possible matches for driver license ID
+  const words = text.split(/\s+/); // Split text into words
+  const match = stringSimilarity.findBestMatch(driverLicenseId, words);
+
+  console.log(`Best match: ${match.bestMatch.target}`);
+  console.log(`Similarity score: ${match.bestMatch.rating}`);
+
+  // Consider it valid if similarity score is above 0.8
+  return match.bestMatch.rating >= 0.6;
+}
+
 function isValidLicense(text: string): boolean {
-  // More generic and universal license validation patterns
   const licensePatterns = {
     licenseKeywords: [
       /\b(driver'?s?\s*license|dl|driving\s*licence|license)\b/i,
       /\b(driver)\b/i,
     ],
-    licenseNumber: [
-      /\b[a-z0-9]{6,10}\b/i, // More flexible license number
-      /\b\d{3,4}\s*\d{3,4}\s*\d{3,4}\b/i, // Allows various number formats
-    ],
+    licenseNumber: [/\b[a-z0-9]{6,10}\b/i, /\b\d{3,4}\s*\d{3,4}\s*\d{3,4}\b/i],
     dateFormats: [
-      /\d{2}\/\d{2}\/\d{4}/i, // MM/DD/YYYY
-      /\d{2}\/\d{2}\/\d{2}/i, // MM/DD/YY
-      /\d{1,2}\.\d{1,2}\.\d{2,4}/i, // Alternative date formats
+      /\d{2}\/\d{2}\/\d{4}/i,
+      /\d{2}\/\d{2}\/\d{2}/i,
+      /\d{1,2}\.\d{1,2}\.\d{2,4}/i,
     ],
     commonFields: [
       /\b(sex|donor|height|class|dob|birth|exp|issue|id)\b/i,
@@ -110,13 +127,16 @@ function isValidLicense(text: string): boolean {
     ],
   };
 
-  // Detailed logging for debugging
+  // Immediately fail if no `licenseKeywords` match
+  const hasKeywordMatch = licensePatterns.licenseKeywords.some((p) =>
+    p.test(text),
+  );
+  if (!hasKeywordMatch) {
+    console.log('No license keywords found in text. Validation failed.');
+    return false;
+  }
+
   const checks = [
-    {
-      name: 'License Keyword',
-      result: licensePatterns.licenseKeywords.some((p) => p.test(text)),
-      weight: 3, // Most critical
-    },
     {
       name: 'License Number',
       result: licensePatterns.licenseNumber.some((p) => p.test(text)),
@@ -134,31 +154,25 @@ function isValidLicense(text: string): boolean {
     },
   ];
 
-  // Log detailed validation results
   checks.forEach((check) => {
     console.log(`${check.name} validation: ${check.result}`);
   });
 
-  // Weighted validation with more flexible scoring
   const validElementsScore = checks.reduce((score, check) => {
     return check.result ? score + check.weight : score;
   }, 0);
 
-  // More lenient scoring
-  const isValid = validElementsScore >= 5;
-
   console.log(`Total valid score: ${validElementsScore}`);
-  console.log(`Overall validation result: ${isValid}`);
 
-  return isValid;
+  return validElementsScore >= 5;
 }
 
 function cleanText(text: string): string {
   return text
-    .replace(/[^a-zA-Z0-9\s/\-:.]/g, '') // Strict whitelist
+    .replace(/[^a-zA-Z0-9\s/\-:.]/g, '')
     .replace(/\s+/g, ' ')
-    .replace(/\s*\|\s*/g, ' ') // Remove vertical bars
-    .replace(/[()[\]{}]/g, '') // Remove brackets
+    .replace(/\s*\|\s*/g, ' ')
+    .replace(/[()[\]{}]/g, '')
     .trim()
     .toLowerCase();
 }

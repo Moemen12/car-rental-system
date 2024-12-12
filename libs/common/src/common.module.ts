@@ -17,6 +17,7 @@ import { AuthGuard } from 'apps/api-gateway/src/modules/auth/guards/auth.guard';
 import { UsersController } from 'apps/api-gateway/src/modules/users/users.controller';
 import { CarController } from 'apps/api-gateway/src/modules/car/car.controller';
 import { RentalController } from 'apps/api-gateway/src/modules/rental/rental.controller';
+import { NestjsFormDataModule } from 'nestjs-form-data';
 
 @Global()
 @Module({})
@@ -40,6 +41,7 @@ export class CommonModule implements NestModule {
             },
           }),
         }),
+        NestjsFormDataModule.config({ isGlobal: true }),
       ],
       providers: [CommonService, AuthGuard],
       exports: [

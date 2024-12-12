@@ -1,11 +1,4 @@
 import {
-  HasMimeType,
-  IsFile,
-  MaxFileSize,
-  MemoryStoredFile,
-} from 'nestjs-form-data';
-import { convertMbToBytes } from '../utilities/general';
-import {
   IsDateString,
   IsIn,
   IsMongoId,
@@ -20,11 +13,6 @@ const VALID_COUNTRIES = Object.keys(countries).map(
 );
 
 export class CreateRentDto {
-  // @IsFile()
-  // @MaxFileSize(convertMbToBytes(2))
-  // @HasMimeType(['image/jpeg', 'image/png'])
-  // driverLicense: MemoryStoredFile;
-
   @IsMongoId()
   carId: string;
 

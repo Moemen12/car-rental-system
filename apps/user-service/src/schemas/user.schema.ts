@@ -18,8 +18,11 @@ export class User extends Document {
   @Prop({ type: String, required: true, enum: ROLE, default: ROLE.CUSTOMER })
   role: string;
 
-  @Prop()
-  driverLicense: string;
+  @Prop({ type: String, default: '' })
+  driverLicenseId: string;
+
+  @Prop({ type: String, default: '' })
+  driverLicenseImageUrl: string;
 
   @Prop({
     type: Object,

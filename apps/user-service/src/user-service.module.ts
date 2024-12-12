@@ -7,6 +7,7 @@ import { User, userSchema } from './schemas/user.schema';
 import { ConfigService } from '@nestjs/config';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { days } from '@nestjs/throttler';
+import { UploadthingService } from '@app/common/services/uploadthing-service.service';
 
 @Module({
   imports: [
@@ -40,6 +41,6 @@ import { days } from '@nestjs/throttler';
     ]),
   ],
   controllers: [UserServiceController],
-  providers: [UserServiceService],
+  providers: [UserServiceService, UploadthingService],
 })
 export class UserServiceModule {}
