@@ -56,11 +56,8 @@ export class RentalServiceService {
         this.userClient.send({ cmd: 'is-driver-exist' }, userId),
       );
 
-      if (isDriverLicenseValid) {
-        throwCustomError('Driver license information is incomplete', 400);
-      }
       const { currentPrice, carModel }: CarInfo = await lastValueFrom(
-        this.carClient.send({ cmd: 'get-car-data' }, carId),
+        this.carClient.send({ cmd: 'get-car-data' }, carId), // Error has throwed error here cause car has rented
       );
 
       const numberOfDays = calculateDaysDifference(
@@ -96,6 +93,7 @@ export class RentalServiceService {
       });
 
       // // 4. Create payment record
+
       await this.paymentModel.create({
         rentalId: rental._id,
         amount: totalCost,

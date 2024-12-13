@@ -14,8 +14,11 @@ export class MicroserviceExceptionFilter
     );
 
     if (exception instanceof RpcException) {
-      return throwError(() => exception.getError());
+      console.log(exception.getError());
+      // update from return   throwError(() => exception.getError());
+      throwError(() => exception.getError());
     }
+
     return throwError(() => ({
       message: exception.message,
       status: exception.status || 500,

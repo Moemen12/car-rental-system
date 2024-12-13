@@ -43,7 +43,7 @@ export function logError(error: any) {
     if (!error?.error?.expected) {
       console.log(chalk.red('Unexpected Error:'), chalk.yellow(error));
     } else {
-      console.log(chalk.green('No unexpected error occurred.'));
+      console.log(chalk.green('expected error occurred.'));
     }
   }
 }

@@ -172,11 +172,9 @@ export class UserServiceService {
 
   async addingRentedCar(data: UpdateUserRentals) {
     try {
-      return await this.userModel
-        .findByIdAndUpdate(data.userId, {
-          $push: { rentalHistory: data.rentalId },
-        })
-        .exec();
+      return await this.userModel.findByIdAndUpdate(data.userId, {
+        $push: { rentalHistory: data.rentalId },
+      });
     } catch (error) {
       logError(error);
       throwCustomError(
@@ -240,14 +238,14 @@ export class UserServiceService {
       const existingUser = await this.userModel.findById(userId).lean();
 
       if (!existingUser) {
-        throwCustomError('User  not found', 401);
+        throwCustomError('User not found', 401);
       }
 
       if (
         !existingUser.driverLicenseId ||
         !existingUser.driverLicenseImageUrl
       ) {
-        throwCustomError('Driver license information is incomplete', 400);
+        throwCustomError('Driver License information is incomplete', 400);
       }
       return true;
     } catch (error) {

@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { ConfigService } from '@nestjs/config';
 import { RentalServiceModule } from './rental-service.module';
+import { MicroserviceExceptionFilter } from '@app/common';
 
 async function bootstrap() {
   const appContext =
@@ -21,6 +22,7 @@ async function bootstrap() {
     },
   );
 
+  app.useGlobalFilters(new MicroserviceExceptionFilter());
   await app.listen();
 }
 bootstrap();
