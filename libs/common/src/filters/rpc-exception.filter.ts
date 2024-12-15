@@ -12,63 +12,37 @@ import { ErrorResShape } from '../types';
 
 @Catch()
 export class RpcExceptionFilter implements ExceptionFilter {
-  private isErrorResShape(exception: any): exception is ErrorResShape {
-    return (
-      exception &&
-      // typeof exception.status === 'number' &&
-      // typeof exception.message === 'string' &&
-      typeof exception.expected === 'boolean' &&
-      typeof exception.unexpectedErrorMsg === 'string'
-    );
-  }
-
   catch(exception: any, host: ArgumentsHost) {
-    console.log(
-      chalk.blueBright('Error has caught in RPC exception filter\n'),
-      exception,
-    );
+    console.log(exception);
 
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
 
-    let status = HttpStatus.INTERNAL_SERVER_ERROR;
-    let message: string | string[] = 'Internal server error';
-    let error: string | null = null;
-
-    // Handle RPC Exceptions
-    if (exception instanceof RpcException) {
-      const rpcError = exception.getError() as any;
-      status =
-        rpcError.status ||
-        rpcError.statusCode ||
-        HttpStatus.INTERNAL_SERVER_ERROR;
-      message = rpcError.message || 'Internal server error';
-      error = rpcError.error;
-    }
-    // Handle validation errors
-    else if (
+    // If we have the error object with our custom structure
+    if (exception?.error?.expected) {
+      return response.status(exception.error.status).json({
+        statusCode: exception.error.status,
+        message: exception.error.message,
+        error: exception.error.error,
+      });
+    } else if (
       exception?.response?.message &&
       Array.isArray(exception.response.message)
     ) {
-      status = exception.status || HttpStatus.BAD_REQUEST;
-      message = exception.response.message[0];
-      error = exception.response.error || 'Validation Error';
-    }
-    // Handle direct HTTP exceptions
-    else if (this.isErrorResShape(exception)) {
-      status = exception.status || HttpStatus.INTERNAL_SERVER_ERROR;
-      message = exception.message || exception.unexpectedErrorMsg;
-      error = exception.error || exception.unexpectedErrorMsg;
+      return response.status(exception.status || 400).json({
+        statusCode: exception.status || 400,
+        message: exception.response.message[0],
+        error: exception.response.error || 'Validation Error',
+      });
     } else {
-      status = exception.status || HttpStatus.INTERNAL_SERVER_ERROR;
-      message = exception.message || 'Internal server error';
-      error = exception.error || null;
+      console.log('here', exception);
     }
 
-    response.status(status).json({
-      statusCode: status,
-      message,
-      error,
+    // Default error response
+    return response.status(500).json({
+      statusCode: 500,
+      message: exception.message || 'Internal server error',
+      error: exception.error || null,
     });
   }
 }

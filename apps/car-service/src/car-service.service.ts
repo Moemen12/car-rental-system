@@ -215,6 +215,7 @@ export class CarServiceService implements OnModuleInit {
 
   async getCarData(carId: string): Promise<CarInfo> {
     try {
+      throw new Error('moemen');
       const dataInfo = await this.carModel
         .findById(carId)
         .select('currentPrice carModel status')
