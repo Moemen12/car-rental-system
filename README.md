@@ -84,7 +84,16 @@ The system sends automated emails for:
 - Payment confirmations
 - Rental invoices
 
-<table style="border-collapse: collapse; width: 100%;">
+<style>
+@media (max-width: 768px) {
+  .email-table td, .email-table th {
+    display: block;
+    width: 100% !important;
+  }
+}
+</style>
+
+<table class="email-table" style="border-collapse: collapse; width: 100%;">
 <tr>
 <th align="center" width="33%" style="padding: 10px;">Payment Confirmation</th>
 <th align="center" width="33%" style="padding: 10px;">Invoice</th>
@@ -92,13 +101,13 @@ The system sends automated emails for:
 </tr>
 <tr>
 <td align="center" style="padding: 10px;">
-<img src="https://github.com/Moemen12/car-rental-system/blob/main/public/images/payment-confirmation.png" width="300" alt="Payment Confirmation Email"/>
+<img src="https://github.com/Moemen12/car-rental-system/blob/main/public/images/payment-confirmation.png" width="300" style="max-width: 100%;" alt="Payment Confirmation Email"/>
 </td>
 <td align="center" style="padding: 10px;">
-<img src="https://github.com/Moemen12/car-rental-system/blob/main/public/images/invoice.png" width="300" alt="Invoice Email"/>
+<img src="https://github.com/Moemen12/car-rental-system/blob/main/public/images/invoice.png" width="300" style="max-width: 100%;" alt="Invoice Email"/>
 </td>
 <td align="center" style="padding: 10px;">
-<img src="https://github.com/Moemen12/car-rental-system/blob/main/public/images/welcome.png" width="300" alt="Welcome Email"/>
+<img src="https://github.com/Moemen12/car-rental-system/blob/main/public/images/welcome.png" width="300" style="max-width: 100%;" alt="Welcome Email"/>
 </td>
 </tr>
 </table>
