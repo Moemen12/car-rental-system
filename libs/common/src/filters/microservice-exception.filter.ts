@@ -1,4 +1,9 @@
-import { Catch, RpcExceptionFilter, ArgumentsHost } from '@nestjs/common';
+import {
+  Catch,
+  RpcExceptionFilter,
+  ArgumentsHost,
+  HttpStatus,
+} from '@nestjs/common';
 import { Observable, throwError } from 'rxjs';
 import { RpcException } from '@nestjs/microservices';
 import chalk from 'chalk';
@@ -8,10 +13,14 @@ export class MicroserviceExceptionFilter
   implements RpcExceptionFilter<RpcException>
 {
   catch(exception: any, host: ArgumentsHost): Observable<any> {
-    console.log(
-      chalk.redBright('Error has caught in Microservice exception filter\n'),
-      exception,
-    );
+    process.env.DEBUG_MODE === 'true'
+      ? console.log(
+          chalk.redBright(
+            'Error has caught in Microservice exception filter\n',
+          ),
+          exception,
+        )
+      : void 0;
 
     if (exception instanceof RpcException) {
       return throwError(() => exception);
@@ -19,8 +28,8 @@ export class MicroserviceExceptionFilter
 
     return throwError(() => ({
       message: exception.message,
-      status: exception.status || 500,
-      error: exception.error || 'Internal server error',
+      status: exception.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      error: exception.error || HttpStatus[HttpStatus.INTERNAL_SERVER_ERROR],
     }));
   }
 }

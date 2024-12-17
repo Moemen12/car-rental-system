@@ -5,7 +5,7 @@ import {
   UserInfo,
 } from '@app/common';
 import { CreateUserDto } from '@app/common/dtos/create-user.dto';
-import { HttpException, Inject, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { isValidObjectId, Model, Types } from 'mongoose';
 import {
@@ -35,16 +35,27 @@ export class UserServiceService {
   ) {}
 
   async findUserById(userId: string): Promise<boolean> {
+    console.log('here', userId);
+
     try {
       if (!isValidObjectId(userId)) {
-        throwCustomError('Invalid user ID format.', 400);
+        throwCustomError('Invalid user ID format.', HttpStatus.BAD_REQUEST);
       }
 
       const isUserExist = await this.userModel.findById(userId).lean().exec();
 
+      if (!isUserExist) {
+        throwCustomError('User not found', HttpStatus.NOT_FOUND);
+      }
+
       return !!isUserExist;
     } catch (error) {
-      throwCustomError(error, 400);
+      logError(error);
+      throwCustomError(
+        error?.error?.message,
+        error?.error?.status,
+        'Error During retrieving User.',
+      );
     }
   }
 
@@ -59,7 +70,7 @@ export class UserServiceService {
         .lean()
         .exec();
       if (existingUser) {
-        throwCustomError('Email is already registered', 409);
+        throwCustomError('Email is already registered', HttpStatus.CONFLICT);
       }
 
       const hashedPassword = await saltAndHashPassword(password);
@@ -108,7 +119,10 @@ export class UserServiceService {
         .exec();
 
       if (!existingUser) {
-        throwCustomError('No account associated with this email address.', 404);
+        throwCustomError(
+          'No account associated with this email address.',
+          HttpStatus.NOT_FOUND,
+        );
       }
 
       const passwordMatched = await bcrypt.compare(
@@ -117,7 +131,7 @@ export class UserServiceService {
       );
 
       if (!passwordMatched) {
-        throwCustomError('Incorrect Credentials', 401);
+        throwCustomError('Incorrect Credentials', HttpStatus.UNAUTHORIZED);
       }
 
       const payload = {
@@ -156,7 +170,7 @@ export class UserServiceService {
       const result = await this.userModel.deleteOne({ _id: id }).exec();
 
       if (result.deletedCount === 0) {
-        throwCustomError('User not found', 404);
+        throwCustomError('User not found', HttpStatus.NOT_FOUND);
       }
 
       return { deleted: true };
@@ -195,6 +209,10 @@ export class UserServiceService {
     fullName: string;
   }> {
     try {
+      return {
+        driverLicenseImageUrl: 'mm',
+        fullName: 'moemen',
+      };
       // Validate the driver license first
       const isDriverLicenseValid = await validateDriverLicense(
         driverLicense,
@@ -202,7 +220,7 @@ export class UserServiceService {
       );
 
       if (!isDriverLicenseValid) {
-        throwCustomError('Invalid Driver License ID', 400);
+        throwCustomError('Invalid Driver License ID', HttpStatus.BAD_REQUEST);
       }
 
       // Proceed to upload the image only after validation succeeds
@@ -238,14 +256,17 @@ export class UserServiceService {
       const existingUser = await this.userModel.findById(userId).lean();
 
       if (!existingUser) {
-        throwCustomError('User not found', 401);
+        throwCustomError('User not found', HttpStatus.UNAUTHORIZED);
       }
 
       if (
         !existingUser.driverLicenseId ||
         !existingUser.driverLicenseImageUrl
       ) {
-        throwCustomError('Driver License information is incomplete', 400);
+        throwCustomError(
+          'Driver License information is incomplete',
+          HttpStatus.BAD_REQUEST,
+        );
       }
       return true;
     } catch (error) {

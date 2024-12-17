@@ -24,6 +24,19 @@ import { ConfigService } from '@nestjs/config';
         }),
       },
     ]),
+    ClientsModule.registerAsync([
+      {
+        inject: [ConfigService],
+        name: 'USER_SERVICE',
+        useFactory: (ConfigService: ConfigService) => ({
+          transport: Transport.TCP,
+          options: {
+            host: ConfigService.get('USER_SERVICE_HOST'),
+            port: ConfigService.get('USER_SERVICE_PORT'),
+          },
+        }),
+      },
+    ]),
   ],
   controllers: [RentalController],
 })

@@ -3,10 +3,14 @@ export enum ROLE {
   CUSTOMER = 'customer',
 }
 
-export enum Status {
+export enum CarStatus {
   AVAILABLE = 'available',
   MAINTENANCE = 'maintenance',
   RENTED = 'rented',
+}
+
+export enum PaymentStatus {
+  PENDING = 'pending',
 }
 
 export enum CarType {

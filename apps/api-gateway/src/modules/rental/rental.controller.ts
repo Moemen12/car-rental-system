@@ -16,8 +16,14 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '@app/common/decorators/role.decorator';
 import { ROLE } from '@app/database/types';
 import { User } from '@app/common/decorators/user.decorator';
-import { HeaderData, PaymentConfirmation, RentCar } from '@app/common';
+import {
+  HeaderData,
+  PaymentConfirmation,
+  RentCar,
+  SuccessMessage,
+} from '@app/common';
 import { Response as Res } from 'express';
+import { UserOwnershipGuard } from '../auth/guards/user-ownership.guard';
 
 @UseGuards(RolesGuard)
 @Controller('rentals')
@@ -31,7 +37,7 @@ export class RentalController {
   async createRental(
     @Body() rentInfo: CreateRentDto,
     @User() headerData: HeaderData,
-  ) {
+  ): Promise<SuccessMessage> {
     const data: RentCar = { ...rentInfo, ...headerData };
     return lastValueFrom(this.carClient.send({ cmd: 'rent-car' }, data));
   }

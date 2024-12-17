@@ -10,7 +10,7 @@ import { ROLE } from '@app/database/types';
 import { HeaderData } from '@app/common';
 import { throwCustomError } from '@app/common/utilities/general';
 import { ClientProxy } from '@nestjs/microservices';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, lastValueFrom } from 'rxjs';
 
 @Injectable()
 export class UserOwnershipGuard implements CanActivate {
@@ -23,14 +23,9 @@ export class UserOwnershipGuard implements CanActivate {
     const headerData: HeaderData = request.user_info;
     const requestedUserId = request.params.id;
 
-    let isUserExist: boolean;
-    try {
-      isUserExist = await firstValueFrom(
-        this.userClient.send({ cmd: 'find-user-by-id' }, requestedUserId),
-      );
-    } catch (error) {
-      throwCustomError('User not found', 404);
-    }
+    await lastValueFrom(
+      this.userClient.send({ cmd: 'find-user-by-id' }, requestedUserId),
+    );
 
     if (headerData.role === ROLE.ADMIN) {
       return true;

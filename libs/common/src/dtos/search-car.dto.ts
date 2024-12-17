@@ -1,14 +1,6 @@
-import {
-  IsOptional,
-  IsString,
-  IsNumber,
-  Min,
-  Max,
-  IsIn,
-  Matches,
-} from 'class-validator';
-import { Transform, Type } from 'class-transformer';
-import { CarType, Status } from '@app/database/types';
+import { IsOptional, IsString, IsNumber, Min } from 'class-validator';
+import { Type } from 'class-transformer';
+import { CarType, CarStatus } from '@app/database/types';
 
 export class CarSearchDto {
   @IsOptional()
@@ -25,11 +17,11 @@ export class CarSearchDto {
 
   @IsOptional()
   @IsString()
-  priceRange?: string; // Format: "minPrice-maxPrice" (e.g., "1000-5000")
+  priceRange?: string;
 
   @IsOptional()
   @IsString()
-  status?: Status;
+  status?: CarStatus;
 
   @IsOptional()
   @IsString()

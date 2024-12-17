@@ -1,4 +1,4 @@
-import { CarType, MaintenanceStatus, Status } from '@app/database/types';
+import { CarType, MaintenanceStatus, CarStatus } from '@app/database/types';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { countries } from 'countries-list';
 import { Document } from 'mongoose';
@@ -31,11 +31,11 @@ export class Car extends Document {
   @Prop({
     required: true,
     type: String,
-    enum: Object.values(Status),
-    default: Status.AVAILABLE,
+    enum: Object.values(CarStatus),
+    default: CarStatus.AVAILABLE,
     index: true,
   })
-  status: Status;
+  status: CarStatus;
 
   @Prop({
     required: true,

@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { ApiGatewayModule } from './api-gateway.module';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import * as compression from 'compression';
-import { MicroserviceExceptionFilter, RpcExceptionFilter } from '@app/common';
+import { RpcExceptionFilter } from '@app/common';
 async function bootstrap() {
   const app = await NestFactory.create(ApiGatewayModule);
   const globalPrefix = 'api';

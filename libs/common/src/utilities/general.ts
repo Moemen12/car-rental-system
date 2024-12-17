@@ -1,4 +1,4 @@
-import { InternalServerErrorException } from '@nestjs/common';
+import { HttpStatus, InternalServerErrorException } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import * as bcrypt from 'bcryptjs';
 import { MemoryStoredFile } from 'nestjs-form-data';
@@ -50,7 +50,7 @@ export function logError(error: any) {
 export function RethrowGeneralError(message: string) {
   throw new RpcException({
     message: message ? message : 'An error occurred',
-    statusCode: 500,
+    statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
     error: 'An error occurred',
   });
 }
@@ -182,7 +182,7 @@ export function encrypt(text: string): string {
     const cipher = crypto.createCipheriv(ALGORITHM, ENCRYPTION_KEY, null);
     return cipher.update(text, 'utf8', 'base64') + cipher.final('base64');
   } catch (error) {
-    throwCustomError('Encryption failed', 500);
+    throwCustomError('Encryption failed', HttpStatus.INTERNAL_SERVER_ERROR);
   }
 }
 

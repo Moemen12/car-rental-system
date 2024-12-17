@@ -4,10 +4,11 @@ import {
   HeaderData,
   RentalInvoiceData,
   RentCar,
+  SuccessMessage,
   UpdatedCar,
   UpdateUserRentals,
 } from '@app/common';
-import { Inject, Injectable } from '@nestjs/common';
+import { HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Rental } from './schemas/rental.schema';
 import { Model } from 'mongoose';
@@ -23,7 +24,7 @@ import {
   throwCustomError,
 } from '@app/common/utilities/general';
 import { confirmationHtml, formattedDate } from './constants';
-import { Status } from '@app/database/types';
+import { CarStatus, PaymentStatus } from '@app/database/types';
 
 @Injectable()
 export class RentalServiceService {
@@ -41,7 +42,6 @@ export class RentalServiceService {
   ) {
     this.stripe = new Stripe(this.configService.get('STRIPE_API_KEY'));
   }
-  //  onMOd
   async createRental({
     userId,
     carId,
@@ -49,7 +49,7 @@ export class RentalServiceService {
     endDate,
     email,
     fullName,
-  }: RentCar) {
+  }: RentCar): Promise<SuccessMessage> {
     const CURRENCY = 'usd';
     try {
       const isDriverLicenseValid: boolean = await lastValueFrom(
@@ -57,7 +57,7 @@ export class RentalServiceService {
       );
 
       const { currentPrice, carModel }: CarInfo = await lastValueFrom(
-        this.carClient.send({ cmd: 'get-car-data' }, carId), // Error has throwed error here cause car has rented
+        this.carClient.send({ cmd: 'get-car-data' }, carId),
       );
 
       const numberOfDays = calculateDaysDifference(
@@ -77,7 +77,7 @@ export class RentalServiceService {
       });
 
       const paymentIntent = await this.stripe.paymentIntents.create({
-        amount: Math.round(totalCost * 100), // Convert to cents
+        amount: Math.round(totalCost * 100),
         currency: CURRENCY,
         metadata: {
           rentalId: rental._id.toString(),
@@ -92,15 +92,13 @@ export class RentalServiceService {
         },
       });
 
-      // // 4. Create payment record
-
       await this.paymentModel.create({
         rentalId: rental._id,
         amount: totalCost,
         currency: CURRENCY,
         paymentIntentId: paymentIntent.id,
         clientSecret: paymentIntent.client_secret,
-        status: 'pending',
+        status: PaymentStatus.PENDING,
         customerId: userId.toString(),
         metadata: paymentIntent.metadata,
         paymentMethodTypes: paymentIntent.payment_method_types,
@@ -127,23 +125,18 @@ export class RentalServiceService {
         rentalId,
       };
 
-      await lastValueFrom(
-        this.userClient.send({ cmd: 'adding-rented-car' }, data),
-      );
-
-      await lastValueFrom(
-        this.rentEmailCLient.send(
-          { cmd: 'payment-confirmation-email' },
-          emailConfirmationData,
+      await Promise.all([
+        lastValueFrom(this.userClient.send({ cmd: 'adding-rented-car' }, data)),
+        lastValueFrom(
+          this.rentEmailCLient.send(
+            { cmd: 'payment-confirmation-email' },
+            emailConfirmationData,
+          ),
         ),
-      );
-      // 5. Return the client_secret and rental details
+      ]);
+
       return {
-        // clientSecret: paymentIntent.client_secret,
-        // paymentIntentId: paymentIntent.id,
-        // rentalId: rental._id,
-        // totalCost,
-        anything: 'anything',
+        message: 'Car rental created successfully with pending payment',
       };
     } catch (error) {
       logError(error);
@@ -168,11 +161,14 @@ export class RentalServiceService {
         .exec();
 
       if (!payment) {
-        throwCustomError('Payment not found', 404);
+        throwCustomError('Payment not found', HttpStatus.NOT_FOUND);
       }
 
       if (payment.status === 'confirmed') {
-        throwCustomError('Payment has already been confirmed.', 409);
+        throwCustomError(
+          'Payment has already been confirmed.',
+          HttpStatus.CONFLICT,
+        );
       }
 
       await this.stripe.paymentIntents.confirm(decryptedPaymentId, {
@@ -191,7 +187,10 @@ export class RentalServiceService {
         .exec();
 
       if (!updatedPayment) {
-        throwCustomError('Failed to update payment status', 500);
+        throwCustomError(
+          'Failed to update payment status',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
       }
 
       const { carId, carModel }: UpdatedCar = await lastValueFrom(
@@ -207,7 +206,7 @@ export class RentalServiceService {
           userId: headerData.userId,
         },
         {
-          status: Status.RENTED,
+          status: CarStatus.RENTED,
         },
       );
 
@@ -238,7 +237,10 @@ export class RentalServiceService {
     } catch (error) {
       logError(error);
       if (error.type === 'StripeInvalidRequestError') {
-        throwCustomError(`Stripe error: ${error.message}`, 400);
+        throwCustomError(
+          `Stripe error: ${error.message}`,
+          HttpStatus.NOT_FOUND,
+        );
       }
 
       throwCustomError(

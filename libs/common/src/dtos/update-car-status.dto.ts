@@ -1,8 +1,8 @@
-import { Status } from '@app/database/types';
+import { CarStatus } from '@app/database/types';
 import { IsEnum, IsNotEmpty } from 'class-validator';
 
 export class UpdateCarStatusDto {
-  @IsEnum(Status)
+  @IsEnum(CarStatus)
   @IsNotEmpty()
-  status: Status;
+  status: CarStatus;
 }

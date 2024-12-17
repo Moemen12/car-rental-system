@@ -1,5 +1,5 @@
 import { CreateCarDto } from '@app/common/dtos/create-car.dto';
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { HttpStatus, Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Car } from '../schemas/car.schema';
 import { Model } from 'mongoose';
@@ -12,7 +12,7 @@ import {
 } from '@app/common';
 import { CarSearchDto } from '@app/common/dtos/search-car.dto';
 import { AlgoliaService } from '@app/common/services';
-import { Status } from '@app/database/types';
+import { CarStatus } from '@app/database/types';
 
 @Injectable()
 export class CarServiceService implements OnModuleInit {
@@ -36,19 +36,19 @@ export class CarServiceService implements OnModuleInit {
 
   private readonly carIndex = 'cars_index';
 
-  private checkCarStatus(status: Status): void {
+  private checkCarStatus(status: CarStatus): void {
     const unavailableStatusMessages: Partial<
-      Record<Status, { message: string; code: number }>
+      Record<CarStatus, { message: string; code: number }>
     > = {
-      [Status.RENTED]: {
+      [CarStatus.RENTED]: {
         message:
           'The requested car is currently rented and cannot be processed.',
-        code: 400,
+        code: HttpStatus.NOT_FOUND,
       },
-      [Status.MAINTENANCE]: {
+      [CarStatus.MAINTENANCE]: {
         message:
           'The requested car is under maintenance and is not available for rental.',
-        code: 503,
+        code: HttpStatus.SERVICE_UNAVAILABLE,
       },
     };
 
@@ -65,7 +65,7 @@ export class CarServiceService implements OnModuleInit {
     if (currentPrice < minPrice || currentPrice > maxPrice) {
       throwCustomError(
         `Current price ${currentPrice} must be between ${minPrice} and ${maxPrice}.`,
-        400,
+        HttpStatus.NOT_FOUND,
       );
     }
   }
@@ -194,7 +194,7 @@ export class CarServiceService implements OnModuleInit {
         .exec();
 
       if (!updatedCar) {
-        throwCustomError('Car not found', 404);
+        throwCustomError('Car not found', HttpStatus.NOT_FOUND);
       }
 
       await this.algoliaService.updateObject(this.carIndex, carId, {
@@ -215,7 +215,6 @@ export class CarServiceService implements OnModuleInit {
 
   async getCarData(carId: string): Promise<CarInfo> {
     try {
-      throw new Error('moemen');
       const dataInfo = await this.carModel
         .findById(carId)
         .select('currentPrice carModel status')
@@ -223,8 +222,9 @@ export class CarServiceService implements OnModuleInit {
         .exec();
 
       if (!dataInfo) {
-        throwCustomError('No Car with info found', 404);
+        throwCustomError('No Car with this Id found', HttpStatus.NOT_FOUND);
       }
+
       this.checkCarStatus(dataInfo.status);
 
       return dataInfo;
@@ -243,31 +243,22 @@ export class CarServiceService implements OnModuleInit {
       const existingCar = await this.carModel.findById(carId).exec();
 
       if (!existingCar) {
-        throwCustomError('No Car with info found', 404);
+        throwCustomError('No Car with info found', HttpStatus.NOT_FOUND);
       }
-      if (existingCar.status === Status.RENTED) {
-        throwCustomError(
-          'The requested car is currently rented and cannot be processed.',
-          400,
-        );
-      }
-
-      if (existingCar.status === Status.MAINTENANCE) {
-        throwCustomError(
-          'The requested car is under maintenance and is not available for rental.',
-          503,
-        );
-      }
+      this.checkCarStatus(existingCar.status);
       const algoliaResult = await this.algoliaService.updateObject(
         this.carIndex,
         carId,
-        { status: Status.RENTED },
+        { status: CarStatus.RENTED },
       );
 
-      await existingCar.updateOne({ status: Status.RENTED });
+      await existingCar.updateOne({ status: CarStatus.RENTED });
 
       if (!algoliaResult) {
-        throwCustomError('Failed to update Algolia', 500);
+        throwCustomError(
+          'Failed to update Algolia',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
       }
 
       return {

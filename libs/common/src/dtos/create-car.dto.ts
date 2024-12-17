@@ -1,4 +1,4 @@
-import { CarType, MaintenanceStatus, Status } from '@app/database/types';
+import { CarType, MaintenanceStatus, CarStatus } from '@app/database/types';
 import { countries } from 'countries-list';
 import {
   IsEnum,
@@ -36,9 +36,9 @@ export class CreateCarDto {
   @IsNotEmpty()
   currentPrice: number;
 
-  @IsEnum(Status)
+  @IsEnum(CarStatus)
   @IsNotEmpty()
-  status: Status;
+  status: CarStatus;
 
   @IsEnum(MaintenanceStatus)
   @IsNotEmpty()

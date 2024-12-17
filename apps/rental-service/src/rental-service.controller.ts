@@ -2,14 +2,19 @@ import { Controller } from '@nestjs/common';
 import { RentalServiceService } from './rental-service.service';
 import { MessagePattern } from '@nestjs/microservices';
 
-import { HeaderData, PaymentConfirmation, RentCar } from '@app/common';
+import {
+  HeaderData,
+  PaymentConfirmation,
+  RentCar,
+  SuccessMessage,
+} from '@app/common';
 
 @Controller()
 export class RentalServiceController {
   constructor(private readonly rentalServiceService: RentalServiceService) {}
 
   @MessagePattern({ cmd: 'rent-car' })
-  async createRental(rentInfo: RentCar) {
+  async createRental(rentInfo: RentCar): Promise<SuccessMessage> {
     return await this.rentalServiceService.createRental(rentInfo);
   }
 
