@@ -4,7 +4,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ConfigService } from '@nestjs/config';
 import { CacheModule, CacheStore } from '@nestjs/cache-manager';
 import { redisStore } from 'cache-manager-redis-yet';
-import { minutes, seconds } from '@nestjs/throttler';
+import { minutes } from '@nestjs/throttler';
 
 @Module({
   imports: [

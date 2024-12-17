@@ -1,6 +1,6 @@
 import { Controller } from '@nestjs/common';
 import { RentalServiceService } from './rental-service.service';
-import { MessagePattern } from '@nestjs/microservices';
+import { EventPattern, MessagePattern } from '@nestjs/microservices';
 
 import {
   HeaderData,
@@ -24,5 +24,15 @@ export class RentalServiceController {
       paymentId,
       headerData,
     );
+  }
+
+  @EventPattern({ cmd: 'clear-unnecessary-related-user-info' })
+  async clearUserInfo(id: string) {
+    return await this.rentalServiceService.clearUserInfo(id);
+  }
+
+  @MessagePattern({ cmd: 'get-active-rentals' })
+  async getActiveRentals(headerData: HeaderData) {
+    return await this.rentalServiceService.getActiveRentals(headerData);
   }
 }

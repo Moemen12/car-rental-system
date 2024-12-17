@@ -25,23 +25,11 @@ export class Payment extends Document {
   })
   status: string;
 
-  @Prop()
-  refundId?: string;
-
-  @Prop()
-  errorMessage?: string;
-
   @Prop({ required: true })
   customerId: string;
 
   @Prop({ type: Object })
   metadata?: Record<string, any>;
-
-  @Prop()
-  refundedAmount?: number;
-
-  @Prop()
-  refundedAt?: Date;
 
   @Prop({ type: [String] })
   paymentMethodTypes?: string[];

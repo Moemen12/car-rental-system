@@ -35,7 +35,6 @@
     "@nestjs/mongoose": "^10.1.0",
     "@nestjs/platform-express": "^10.0.0",
     "@nestjs/throttler": "^6.2.1",
-    "@nestjs/websockets": "^10.4.8",
     "algoliasearch": "^5.15.0",
     "amqp-connection-manager": "^4.1.14",
     "amqplib": "^0.10.5",

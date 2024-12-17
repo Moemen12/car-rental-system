@@ -24,20 +24,17 @@ export class User extends Document {
   @Prop({ type: String, default: '' })
   driverLicenseImageUrl: string;
 
-  @Prop({
-    type: Object,
-    default: {},
-  })
-  profile: {
-    address?: string;
-    preferredPaymentMethod?: string;
-    documents?: Record<string, any>;
-    phoneNumber?: string;
-    dateOfBirth?: Date;
-  };
-
-  @Prop({ type: Boolean, default: true })
-  isActive: boolean;
+  // @Prop({
+  //   type: Object,
+  //   default: {},
+  // })
+  // profile: {
+  //   address?: string;
+  //   preferredPaymentMethod?: string;
+  //   documents?: Record<string, any>;
+  //   phoneNumber?: string;
+  //   dateOfBirth?: Date;
+  // };
 
   @Prop({ type: [{ type: Types.ObjectId, ref: 'Rental' }] })
   rentalHistory: Types.ObjectId[];

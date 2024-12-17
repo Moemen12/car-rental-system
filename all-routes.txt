@@ -8,4 +8,5 @@
 /api/cars/:id/status patch
 /api/rentals   post
 /api/rentals/payment-confirmation/:id get
+/api/rentals/active get
 

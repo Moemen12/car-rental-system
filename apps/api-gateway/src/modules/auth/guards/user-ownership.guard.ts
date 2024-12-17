@@ -1,6 +1,7 @@
 import {
   CanActivate,
   ExecutionContext,
+  HttpStatus,
   Inject,
   Injectable,
 } from '@nestjs/common';
@@ -37,7 +38,7 @@ export class UserOwnershipGuard implements CanActivate {
       }
       throwCustomError(
         'You do not have permission to access this resource',
-        403,
+        HttpStatus.FORBIDDEN,
       );
     }
     return false;

@@ -25,7 +25,6 @@ export interface UserInfo {
   fullName: string;
   role: string;
   rentalHistory: Types.ObjectId[];
-  isActive: boolean;
 }
 
 export interface SuccessMessage {
@@ -90,4 +89,43 @@ export interface RentalInvoiceData {
   invoiceNumber: string;
   paymentId: string;
   currentDate: string;
+}
+
+export interface CarInfos {
+  _id: string;
+  carModel: string;
+  maintenanceStatus: string;
+}
+
+export interface RentalBase {
+  _id: Types.ObjectId;
+  carId: Types.ObjectId;
+  startDate: Date;
+  endDate: Date;
+  totalCost: number;
+}
+
+export interface RentalResponse {
+  _id: Types.ObjectId;
+  startDate: string;
+  endDate: string;
+  totalCost: number;
+  carModel?: string;
+  maintenanceStatus?: string;
+}
+
+export interface ActiveRentalsResponse {
+  userInfo: UserInfo;
+  rentals: RentalResponse[];
+}
+
+export interface RentalWithCarInfo extends RentalBase {
+  carModel?: string;
+  maintenanceStatus?: string;
+}
+
+export interface UserInfo {
+  email: string;
+  fullName: string;
+  driverLicenseImageUrl: string;
 }

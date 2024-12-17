@@ -3,7 +3,12 @@ import { UserServiceService } from './user-service.service';
 import { MessagePattern } from '@nestjs/microservices';
 import { CreateUserDto } from '@app/common/dtos/create-user.dto';
 
-import { AuthAccessType, UpdateUserRentals, UserInfo } from '@app/common';
+import {
+  AuthAccessType,
+  HeaderData,
+  UpdateUserRentals,
+  UserInfo,
+} from '@app/common';
 
 @Controller()
 export class UserServiceController {
@@ -60,5 +65,14 @@ export class UserServiceController {
   @MessagePattern({ cmd: 'is-driver-exist' })
   async isDriverLicenseValid(userId: string): Promise<boolean> {
     return await this.userServiceService.isDriverLicenseValid(userId);
+  }
+
+  @MessagePattern({ cmd: 'get-user-info' })
+  async getActiveRentals(headerData: HeaderData): Promise<{
+    fullName: string;
+    joinDate: string;
+    driverLicenseImageUrl: string;
+  }> {
+    return await this.userServiceService.getActiveRentals(headerData);
   }
 }

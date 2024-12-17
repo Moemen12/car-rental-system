@@ -1,6 +1,7 @@
 import {
   AuthAccessType,
   EmailRegistrationData,
+  HeaderData,
   UpdateUserRentals,
   UserInfo,
 } from '@app/common';
@@ -9,6 +10,7 @@ import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { isValidObjectId, Model, Types } from 'mongoose';
 import {
+  formatDate,
   logError,
   RethrowGeneralError,
   saltAndHashPassword,
@@ -21,7 +23,6 @@ import { User } from './schemas/user.schema';
 
 import { ClientProxy } from '@nestjs/microservices';
 import { ROLE } from '@app/database/types';
-import { Rental } from 'apps/rental-service/src/schemas/rental.schema';
 import { UpdateUserDto } from '@app/common/dtos/update-user.dto';
 import { UploadthingService } from '@app/common/services/uploadthing-service.service';
 
@@ -30,6 +31,8 @@ export class UserServiceService {
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<User>,
     @Inject('USER_EMAIL_SERVICE') private readonly rabbitClient: ClientProxy,
+    @Inject('PAYMENT_RENTAL_SERVICE')
+    private readonly paymentRentalClient: ClientProxy,
     private readonly jwtService: JwtService,
     private readonly uploadThingService: UploadthingService,
   ) {}
@@ -173,6 +176,11 @@ export class UserServiceService {
         throwCustomError('User not found', HttpStatus.NOT_FOUND);
       }
 
+      this.paymentRentalClient.emit(
+        { cmd: 'clear-unnecessary-related-user-info' },
+        id,
+      );
+
       return { deleted: true };
     } catch (error) {
       logError(error);
@@ -209,11 +217,6 @@ export class UserServiceService {
     fullName: string;
   }> {
     try {
-      return {
-        driverLicenseImageUrl: 'mm',
-        fullName: 'moemen',
-      };
-      // Validate the driver license first
       const isDriverLicenseValid = await validateDriverLicense(
         driverLicense,
         driverLicenseId,
@@ -276,6 +279,41 @@ export class UserServiceService {
         error?.error?.message,
         error?.error?.status,
         'Failed to retrieve Driver License info',
+      );
+    }
+  }
+
+  async getActiveRentals({ userId }: HeaderData) {
+    try {
+      const user = await this.userModel
+        .findById(userId)
+        .select('fullName driverLicenseImageUrl email createdAt')
+        .lean<{
+          fullName: string;
+          driverLicenseImageUrl: string;
+          createdAt: Date;
+          email: string;
+        }>()
+        .exec();
+
+      if (!user) {
+        throwCustomError('User  not found', HttpStatus.NOT_FOUND);
+      }
+
+      const userData = {
+        email: user.email,
+        fullName: user.fullName,
+        driverLicenseImageUrl: user.driverLicenseImageUrl,
+        joinDate: formatDate(user.createdAt),
+      };
+
+      return userData;
+    } catch (error) {
+      logError(error);
+      throwCustomError(
+        error?.error?.message,
+        error?.error?.status,
+        'Error During retrieving User Data',
       );
     }
   }

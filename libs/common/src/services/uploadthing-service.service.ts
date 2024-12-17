@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { UTApi } from 'uploadthing/server';
 import { logError, throwCustomError } from '../utilities/general';
-import { v4 as uuidv4 } from 'uuid'; // Import UUID for generating unique names
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class UploadthingService {
@@ -15,21 +15,17 @@ export class UploadthingService {
     fileData: any,
   ): Promise<{ key: string; url: string }> {
     try {
-      // Create buffer from the received data
       const buffer = Buffer.from(fileData.buffer);
 
-      // Generate a unique name using UUID and preserve the original extension
       const originalExtension =
         fileData.originalName?.split('.').pop() || 'jpg';
       const uniqueName = `${uuidv4()}.${originalExtension}`;
 
-      // Create a File object with the unique name
       const file = new File([buffer], uniqueName, {
         type: fileData.mimeType || fileData.fileType?.mime || 'image/jpeg',
         lastModified: Date.now(),
       });
 
-      // Upload to UploadThing
       const response = await this.utapi.uploadFiles([file]);
       const uploadedFile = response[0];
 

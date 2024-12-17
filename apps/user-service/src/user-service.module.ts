@@ -7,7 +7,7 @@ import { User, userSchema } from './schemas/user.schema';
 import { ConfigService } from '@nestjs/config';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { days } from '@nestjs/throttler';
-import { UploadthingService } from '@app/common/services/uploadthing-service.service';
+import { UploadthingService } from '@app/common/services';
 
 @Module({
   imports: [
@@ -35,6 +35,17 @@ import { UploadthingService } from '@app/common/services/uploadthing-service.ser
                 ),
               },
             },
+          },
+        }),
+      },
+      {
+        name: 'PAYMENT_RENTAL_SERVICE',
+        inject: [ConfigService],
+        useFactory: (configService: ConfigService) => ({
+          transport: Transport.TCP,
+          options: {
+            host: configService.get('RENT_SERVICE_HOST'),
+            port: configService.get('RENT_SERVICE_PORT'),
           },
         }),
       },

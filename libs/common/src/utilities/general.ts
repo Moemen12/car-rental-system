@@ -180,7 +180,14 @@ function cleanText(text: string): string {
 export function encrypt(text: string): string {
   try {
     const cipher = crypto.createCipheriv(ALGORITHM, ENCRYPTION_KEY, null);
-    return cipher.update(text, 'utf8', 'base64') + cipher.final('base64');
+    const encrypted =
+      cipher.update(text, 'utf8', 'base64') + cipher.final('base64');
+
+    // Use URL-safe Base64 encoding
+    return encrypted
+      .replace(/\+/g, '-') // Replace + with -
+      .replace(/\//g, '_') // Replace / with _
+      .replace(/=+$/, ''); // Remove trailing =
   } catch (error) {
     throwCustomError('Encryption failed', HttpStatus.INTERNAL_SERVER_ERROR);
   }
@@ -188,14 +195,23 @@ export function encrypt(text: string): string {
 
 export function decrypt(encryptedText: string): string {
   try {
+    // Restore standard Base64 encoding
+    let paddedText = encryptedText
+      .replace(/-/g, '+') // Restore +
+      .replace(/_/g, '/'); // Restore /
+
+    while (paddedText.length % 4 !== 0) {
+      paddedText += '=';
+    }
+
     const decipher = crypto.createDecipheriv(ALGORITHM, ENCRYPTION_KEY, null);
     return (
-      decipher.update(encryptedText, 'base64', 'utf8') + decipher.final('utf8')
+      decipher.update(paddedText, 'base64', 'utf8') + decipher.final('utf8')
     );
   } catch (error) {
     throwCustomError(
       'You are not authorized to perform this action.',
-      401,
+      HttpStatus.UNAUTHORIZED,
       'An error occurred during decrypting text',
     );
   }
@@ -208,4 +224,10 @@ export function calculateDaysDifference(
   const timeDifference = endDate.getTime() - startDate.getTime();
   const numberOfDays = timeDifference / (1000 * 3600 * 24);
   return numberOfDays;
+}
+
+export function formatDate(date: Date): string {
+  const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+
+  return formattedDate;
 }

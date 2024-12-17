@@ -5,8 +5,9 @@ import {
   IsNotEmpty,
   IsString,
 } from 'class-validator';
-import { IsFutureDate } from '../decorators/is-future-date.decorator';
+
 import { countries } from 'countries-list';
+import { IsFutureDateAndBefore } from '../decorators/is-future-date.decorator';
 
 const VALID_COUNTRIES = Object.keys(countries).map(
   (code) => countries[code].name,
@@ -16,17 +17,15 @@ export class CreateRentDto {
   @IsMongoId()
   carId: string;
 
-  @IsFutureDate({
-    message:
-      'Start date should be a future date. Please select a valid start date.',
+  @IsFutureDateAndBefore(undefined, {
+    message: 'Start date should be a future date.',
   })
   @IsDateString()
   @IsNotEmpty()
   startDate: string;
 
-  @IsFutureDate({
-    message:
-      'Start date should be a future date. Please select a valid start date.',
+  @IsFutureDateAndBefore('startDate', {
+    message: 'End date must be a future date and after the start date.',
   })
   @IsDateString()
   @IsNotEmpty()

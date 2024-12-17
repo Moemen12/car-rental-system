@@ -1,8 +1,8 @@
 import {
   CanActivate,
   ExecutionContext,
+  HttpStatus,
   Injectable,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
@@ -20,7 +20,10 @@ export class AuthGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const token = this.extractTokenFromHeader(request);
     if (!token) {
-      throwCustomError('Unauthorized access. Please log in to continue.', 401);
+      throwCustomError(
+        'Unauthorized access. Please log in to continue.',
+        HttpStatus.UNAUTHORIZED,
+      );
     }
 
     try {
@@ -30,16 +33,19 @@ export class AuthGuard implements CanActivate {
 
       const userInfo = request['user_info'];
       if (!userInfo) {
-        throwCustomError('Token expired or invalid', 401);
+        throwCustomError('Token expired or invalid', HttpStatus.UNAUTHORIZED);
       }
 
       // Check expiration from decrypted data
       const now = Math.floor(Date.now() / 1000);
       if (userInfo.exp && userInfo.exp < now) {
-        throwCustomError('Token has expired', 401);
+        throwCustomError('Token has expired', HttpStatus.UNAUTHORIZED);
       }
     } catch {
-      throwCustomError('Unauthorized access. Please log in to continue.', 401);
+      throwCustomError(
+        'Unauthorized access. Please log in to continue.',
+        HttpStatus.UNAUTHORIZED,
+      );
     }
     return true;
   }

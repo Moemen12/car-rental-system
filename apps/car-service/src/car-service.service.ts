@@ -6,6 +6,7 @@ import { Model } from 'mongoose';
 import { logError, throwCustomError } from '@app/common/utilities/general';
 import {
   CarInfo,
+  HeaderData,
   SuccessMessage,
   UpdateCarStatus,
   UpdatedCar,
@@ -271,6 +272,28 @@ export class CarServiceService implements OnModuleInit {
         error?.error?.message,
         error?.error?.status,
         'Failed to Confirm Payment Process',
+      );
+    }
+  }
+
+  async getCarInfo(carIds: string[]): Promise<CarInfo[]> {
+    try {
+      const carsInfo: CarInfo[] = await this.carModel
+        .find({ _id: { $in: carIds } })
+        .select('carModel maintenanceStatus')
+        .lean();
+
+      if (!carsInfo || carsInfo.length === 0) {
+        throwCustomError('Cars not Found', HttpStatus.NOT_FOUND);
+      }
+
+      return carsInfo;
+    } catch (error) {
+      logError(error);
+      throwCustomError(
+        error?.error?.message,
+        error?.error?.status,
+        'Error During Retrieving Car Data',
       );
     }
   }

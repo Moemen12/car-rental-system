@@ -1,5 +1,9 @@
 import { throwCustomError } from '@app/common/utilities/general';
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  HttpStatus,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
 
@@ -48,7 +52,7 @@ export class EncryptionService {
       // Log or handle specific decryption errors
       throwCustomError(
         'Decryption failed. Please verify the encryption key and data integrity.',
-        401,
+        HttpStatus.UNAUTHORIZED,
       );
     }
   }

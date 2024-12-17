@@ -13,6 +13,10 @@ export enum PaymentStatus {
   PENDING = 'pending',
 }
 
+export enum RentalStatus {
+  PENDING = 'pending',
+}
+
 export enum CarType {
   LUXURY = 'luxury',
   ECONOMY = 'economy',
@@ -24,9 +28,3 @@ export enum MaintenanceStatus {
   GOOD = 'good',
   NEEDS_MAINTENANCE = 'needs_maintenance',
 }
-
-// export enum RentalStatus {
-//   ACTIVE = 'active',
-//   COMPLETED = 'completed',
-//   CANCELLED = 'cancelled',
-// }

@@ -4,6 +4,7 @@ import { MessagePattern } from '@nestjs/microservices';
 import { CreateCarDto } from '@app/common/dtos/create-car.dto';
 import {
   CarInfo,
+  HeaderData,
   SuccessMessage,
   UpdateCarStatus,
   UpdatedCar,
@@ -45,5 +46,10 @@ export class CarServiceController {
   @MessagePattern({ cmd: 'update-car-rental-details' })
   async updateCarStatus(carId: string): Promise<UpdatedCar> {
     return await this.carServiceService.updateCarStatus(carId);
+  }
+
+  @MessagePattern({ cmd: 'get-car-info' })
+  async getCarInfo(carIds: string[]) {
+    return await this.carServiceService.getCarInfo(carIds);
   }
 }

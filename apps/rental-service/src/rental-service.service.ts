@@ -1,12 +1,17 @@
 import {
+  ActiveRentalsResponse,
   CarInfo,
+  CarInfos,
   EmailConfirmationData,
   HeaderData,
+  RentalBase,
   RentalInvoiceData,
+  RentalResponse,
   RentCar,
   SuccessMessage,
   UpdatedCar,
   UpdateUserRentals,
+  UserInfo,
 } from '@app/common';
 import { HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
@@ -20,11 +25,17 @@ import { Payment } from './schemas/payment.schema';
 import {
   calculateDaysDifference,
   decrypt,
+  formatDate,
   logError,
   throwCustomError,
 } from '@app/common/utilities/general';
 import { confirmationHtml, formattedDate } from './constants';
-import { CarStatus, PaymentStatus } from '@app/database/types';
+import {
+  CarStatus,
+  PaymentStatus,
+  RentalStatus,
+  ROLE,
+} from '@app/database/types';
 
 @Injectable()
 export class RentalServiceService {
@@ -247,6 +258,80 @@ export class RentalServiceService {
         error?.error?.message,
         error?.error?.status,
         'An error occurred during payment confirmation.',
+      );
+    }
+  }
+
+  async clearUserInfo(id: string) {
+    await this.rentalModel.deleteMany({
+      userId: id,
+      status: RentalStatus.PENDING,
+    });
+
+    await this.paymentModel.deleteMany({
+      customerId: id,
+      status: RentalStatus.PENDING,
+    });
+  }
+
+  async getActiveRentals(
+    headerData: HeaderData,
+  ): Promise<ActiveRentalsResponse> {
+    try {
+      const currentDate = new Date();
+
+      const query: any = {
+        status: CarStatus.RENTED,
+        startDate: { $lt: currentDate },
+        endDate: { $gt: currentDate },
+      };
+
+      if (headerData.role === ROLE.CUSTOMER) {
+        query.userId = headerData.userId;
+      }
+
+      const activeRentals: RentalBase[] = await this.rentalModel
+        .find(query)
+        .select('startDate endDate totalCost carId')
+        .lean<RentalBase[]>();
+
+      const userInfo = await lastValueFrom<UserInfo>(
+        this.userClient.send({ cmd: 'get-user-info' }, headerData),
+      );
+
+      const carIds = activeRentals.map((rental) => rental.carId.toString());
+
+      const carsInfo: CarInfos[] = await lastValueFrom<CarInfos[]>(
+        this.carClient.send({ cmd: 'get-car-info' }, carIds),
+      );
+
+      const rentalsWithCarInfo: RentalResponse[] = activeRentals.map(
+        (rental) => {
+          const carInfo = carsInfo.find(
+            (car: CarInfos) => car._id.toString() === rental.carId.toString(),
+          );
+          const { carId, ...rentalWithoutCarId } = rental;
+
+          return {
+            ...rentalWithoutCarId,
+            startDate: formatDate(rental.startDate),
+            endDate: formatDate(rental.endDate),
+            carModel: carInfo?.carModel,
+            maintenanceStatus: carInfo?.maintenanceStatus,
+          };
+        },
+      );
+
+      return {
+        userInfo,
+        rentals: rentalsWithCarInfo,
+      };
+    } catch (error) {
+      logError(error);
+      throwCustomError(
+        error?.error?.message,
+        error?.error?.status,
+        'Error During Retrieving Active Rentals',
       );
     }
   }
