@@ -1,10 +1,10 @@
-import { Injectable } from '@nestjs/common';
-import * as fs from 'fs';
-import * as path from 'path';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
-import * as puppeteer from 'puppeteer';
-import Mail from 'nodemailer/lib/mailer';
 import { ConfigService } from '@nestjs/config';
+import Mail from 'nodemailer/lib/mailer';
+import { promises as fs } from 'fs';
+import * as path from 'path';
+
 import {
   EmailConfirmationData,
   RentalInvoiceData,
@@ -18,7 +18,7 @@ import {
 import { rentalInvoiceEmailBody } from './constants';
 
 @Injectable()
-export class EmailServiceService {
+export class EmailServiceService implements OnModuleInit {
   private transporter: nodemailer.Transporter;
   private registrationEmailTemplate: string;
   private paymentConfirmationTemplate: string;
@@ -34,45 +34,52 @@ export class EmailServiceService {
         pass: this.configService.get<string>('EMAIL_PASSWORD'),
       },
     });
+  }
 
+  // Initialize templates asynchronously during startup
+  async onModuleInit() {
     const templatesPath = path.resolve(
       process.cwd(),
       'libs/common/src/utilities/templates',
     );
 
-    this.registrationEmailTemplate = fs.readFileSync(
+    this.registrationEmailTemplate = await fs.readFile(
       path.join(templatesPath, 'registration-email.html'),
       'utf8',
     );
-    this.paymentConfirmationTemplate = fs.readFileSync(
+
+    this.paymentConfirmationTemplate = await fs.readFile(
       path.join(templatesPath, 'payment.html'),
       'utf8',
     );
-    this.rentalInvoiceTemplate = fs.readFileSync(
+
+    this.rentalInvoiceTemplate = await fs.readFile(
       path.join(templatesPath, 'rental-invoice.html'),
       'utf8',
     );
   }
 
   private async generatePdfFromHtml(htmlContent: string): Promise<Buffer> {
+    // Lazy-load puppeteer only when needed
+    const puppeteer = await import('puppeteer');
+
     const browser = await puppeteer.launch();
     const page = await browser.newPage();
 
     // Set the content of the page
     await page.setContent(htmlContent, { waitUntil: 'load' });
 
-    // Generate a single-page PDF
     const pdfBuffer = await page.pdf({
       format: 'A4',
-      printBackground: true, // Ensures background colors and images are included
+      printBackground: true,
       margin: {
         top: '10mm',
         bottom: '10mm',
         left: '10mm',
         right: '10mm',
       },
-      scale: 0.9, // Scale down if content overflows
-      preferCSSPageSize: true, // Ensures CSS @page dimensions are respected
+      scale: 0.9,
+      preferCSSPageSize: true,
     });
 
     await browser.close();
