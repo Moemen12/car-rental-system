@@ -84,19 +84,21 @@ The system sends automated emails for:
 - Payment confirmations
 - Rental invoices
 
-<table>
-<tr align="center">
-<td width="33%">
-<p><strong>Payment Confirmation</strong></p>
-<img src="https://github.com/Moemen12/car-rental-system/blob/main/public/images/payment-confirmation.png" width="250" alt="Payment Confirmation Email"/>
+<table style="border-collapse: collapse; width: 100%;">
+<tr>
+<th align="center" width="33%" style="padding: 10px;">Payment Confirmation</th>
+<th align="center" width="33%" style="padding: 10px;">Invoice</th>
+<th align="center" width="33%" style="padding: 10px;">Welcome Email</th>
+</tr>
+<tr>
+<td align="center" style="padding: 10px;">
+<img src="https://github.com/Moemen12/car-rental-system/blob/main/public/images/payment-confirmation.png" width="300" alt="Payment Confirmation Email"/>
 </td>
-<td width="33%">
-<p><strong>Invoice</strong></p>
-<img src="https://github.com/Moemen12/car-rental-system/blob/main/public/images/invoice.png" width="250" alt="Invoice Email"/>
+<td align="center" style="padding: 10px;">
+<img src="https://github.com/Moemen12/car-rental-system/blob/main/public/images/invoice.png" width="300" alt="Invoice Email"/>
 </td>
-<td width="33%">
-<p><strong>Welcome Email</strong></p>
-<img src="https://github.com/Moemen12/car-rental-system/blob/main/public/images/welcome.png" width="250" alt="Welcome Email"/>
+<td align="center" style="padding: 10px;">
+<img src="https://github.com/Moemen12/car-rental-system/blob/main/public/images/welcome.png" width="300" alt="Welcome Email"/>
 </td>
 </tr>
 </table>
