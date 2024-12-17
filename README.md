@@ -71,8 +71,10 @@ car-rental-system/
 │   ├── user-service/
 │   ├── car-service/
 │   └── rental-service/
+|   └── email-service/
 └── libs/
-    └── shared/
+    └── common/
+    └── database/
 ```
 
 ## 📧 Automated Emails
