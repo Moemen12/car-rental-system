@@ -80,14 +80,26 @@ car-rental-system/
 ## 📧 Automated Emails
 
 The system sends automated emails for:
-
 - Welcome messages
 - Payment confirmations
 - Rental invoices
 
-![Email Templates](https://github.com/Moemen12/car-rental-system/blob/main/public/images/payment-confirmation.png)
-![Email Templates](https://github.com/Moemen12/car-rental-system/blob/main/public/images/invoice.png)
-![Email Templates](https://github.com/Moemen12/car-rental-system/blob/main/public/images/welcome.png)
+<table>
+<tr align="center">
+<td width="33%">
+<p><strong>Payment Confirmation</strong></p>
+<img src="https://github.com/Moemen12/car-rental-system/blob/main/public/images/payment-confirmation.png" width="250" alt="Payment Confirmation Email"/>
+</td>
+<td width="33%">
+<p><strong>Invoice</strong></p>
+<img src="https://github.com/Moemen12/car-rental-system/blob/main/public/images/invoice.png" width="250" alt="Invoice Email"/>
+</td>
+<td width="33%">
+<p><strong>Welcome Email</strong></p>
+<img src="https://github.com/Moemen12/car-rental-system/blob/main/public/images/welcome.png" width="250" alt="Welcome Email"/>
+</td>
+</tr>
+</table>
 
 ## ⚙️ Environment Variables
 
