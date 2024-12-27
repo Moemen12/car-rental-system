@@ -1,6 +1,6 @@
 # 🚗 Advanced Car Rental System
 
-A sophisticated car rental platform built with NestJS, featuring microservices architecture, real-time processing, and advanced security features.
+A advanced car rental platform built with NestJS, featuring microservices architecture, real-time processing, and advanced security features.
 
 ## 🌟 Key Features
 
